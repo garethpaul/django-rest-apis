@@ -1,6 +1,7 @@
 from django.shortcuts import *
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 from social.apps.django_app.default.models import UserSocialAuth
 import twitter
@@ -12,7 +13,7 @@ def login(request):
 @login_required
 def home(request):
     
-    status = request.REQUEST.get("status", None)
+    status = request.POST.get("status", None)
     
     api = get_twitter(request.user)
     if status:
@@ -30,6 +31,9 @@ def logout(request):
     return HttpResponseRedirect('/')
 
 def get_twitter(user):
+
+    if not settings.SOCIAL_AUTH_TWITTER_KEY or not settings.SOCIAL_AUTH_TWITTER_SECRET:
+        raise ImproperlyConfigured('Twitter consumer key and secret must be configured in the environment.')
 
     access_token_key=settings.TWITTER_ACCESS_TOKEN
     access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET

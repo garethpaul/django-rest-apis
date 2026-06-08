@@ -44,6 +44,7 @@ cd django-rest-apis
 python -m pip install -r requirements.txt
 export DJANGO_DEBUG=1
 export DJANGO_SECRET_KEY=local-development-secret
+export DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 export SOCIAL_AUTH_TWITTER_KEY=
 export SOCIAL_AUTH_TWITTER_SECRET=
 export TWITTER_ACCESS_TOKEN=
@@ -68,7 +69,8 @@ scripts/check-baseline.sh
 
 The guard verifies that `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, and Twitter
 credential settings are environment-driven and that the old hardcoded
-`SECRET_KEY` is gone.
+`SECRET_KEY` is gone. It also checks POST-only status submission, safe Twitter
+status links, and pinned legacy dependency ranges.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -76,9 +78,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Required environment variables for local app startup are:
-  `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `SOCIAL_AUTH_TWITTER_KEY`,
-  `SOCIAL_AUTH_TWITTER_SECRET`, `TWITTER_ACCESS_TOKEN`, and
-  `TWITTER_ACCESS_TOKEN_SECRET`.
+  `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`,
+  `SOCIAL_AUTH_TWITTER_KEY`, `SOCIAL_AUTH_TWITTER_SECRET`,
+  `TWITTER_ACCESS_TOKEN`, and `TWITTER_ACCESS_TOKEN_SECRET`.
 
 ## Security and Privacy Notes
 

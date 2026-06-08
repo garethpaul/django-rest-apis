@@ -1,5 +1,5 @@
-django>=1.4
-python-social-auth
-python-twitter
-south
-fabric
+Django>=1.6,<1.7
+python-social-auth>=0.1.26,<0.3
+python-twitter>=2,<4
+South>=0.8,<1
+Fabric>=1,<2

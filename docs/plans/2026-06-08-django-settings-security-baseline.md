@@ -27,7 +27,11 @@ because new users often replace them directly in source.
 - R2. `DEBUG` must default to false and be enabled through `DJANGO_DEBUG`.
 - R3. `TEMPLATE_DEBUG` must track `DEBUG`.
 - R4. Twitter API keys and access tokens must come from environment variables.
-- R5. README and a guard script must document and verify the configuration
+- R5. `ALLOWED_HOSTS` must be environment-driven and non-empty by default.
+- R6. Tweet submission must read from POST only.
+- R7. Twitter status links must use HTTPS and safe external-link attributes.
+- R8. Legacy dependencies must be pinned to the Django 1.6-era stack.
+- R9. README and a guard script must document and verify the configuration
   boundary.
 
 ## Implementation Units
@@ -42,7 +46,8 @@ because new users often replace them directly in source.
 
 - **Goal:** Verify the legacy settings contract without requiring a full Django
   1.4 runtime on this host.
-- **Files:** `scripts/check-baseline.sh`
+- **Files:** `scripts/check-baseline.sh`, `requirements.txt`,
+  `home/views.py`, `templates/home.html`
 - **Verification:** `scripts/check-baseline.sh`, `git diff --check`
 
 ### U3. Documentation
