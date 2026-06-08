@@ -1,3 +1,8 @@
+# django-rest-apis
+
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 django-rest-apis
 =================
 
