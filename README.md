@@ -13,18 +13,20 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 
 - `README.md` - project overview and local usage notes
 - `requirements.txt` - Python dependency or packaging metadata
+- `CHANGES.md` - maintenance history
 - `app` - source or example code
 - `home` - source or example code
 - `manage.py`
 - `SECURITY.md` - security reporting and disclosure guidance
+- `scripts/check-baseline.sh` - source-level settings security guard
 - `templates` - source or example code
 - `VISION.md` - project direction and maintenance guardrails
 
 Additional scan context:
 
-- Source directories: app, home, templates
+- Source directories: app, home, scripts, templates
 - Dependency and build manifests: requirements.txt
-- Entry points or build surfaces: manage.py
+- Entry points or build surfaces: manage.py, `scripts/check-baseline.sh`
 - Test-looking files: home/tests.py
 
 ## Getting Started
@@ -40,6 +42,12 @@ Additional scan context:
 git clone https://github.com/garethpaul/django-rest-apis.git
 cd django-rest-apis
 python -m pip install -r requirements.txt
+export DJANGO_DEBUG=1
+export DJANGO_SECRET_KEY=local-development-secret
+export SOCIAL_AUTH_TWITTER_KEY=
+export SOCIAL_AUTH_TWITTER_SECRET=
+export TWITTER_ACCESS_TOKEN=
+export TWITTER_ACCESS_TOKEN_SECRET=
 ```
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
@@ -47,16 +55,30 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 ## Running or Using the Project
 
 - Run Django management commands through `python manage.py ...`.
+- The app is a legacy Django sample. Keep real Twitter OAuth credentials in
+  environment variables or untracked local shell configuration.
 
 ## Testing and Verification
 
-- `python -m pytest` or the test runner used by the files above
+Run the source-level settings security guard before committing:
+
+```bash
+scripts/check-baseline.sh
+```
+
+The guard verifies that `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, and Twitter
+credential settings are environment-driven and that the old hardcoded
+`SECRET_KEY` is gone.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- Required environment variables for local app startup are:
+  `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `SOCIAL_AUTH_TWITTER_KEY`,
+  `SOCIAL_AUTH_TWITTER_SECRET`, `TWITTER_ACCESS_TOKEN`, and
+  `TWITTER_ACCESS_TOKEN_SECRET`.
 
 ## Security and Privacy Notes
 
@@ -68,6 +90,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
+- See `CHANGES.md` for maintenance history.
 
 ## Contributing
 

@@ -10,19 +10,39 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.lower() in ('1', 'true', 'yes', 'on')
+
+
+def require_env(name, default=None):
+    value = os.environ.get(name, default)
+    if value is None:
+        raise ImproperlyConfigured('%s must be set in the environment.' % name)
+    return value
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ')e-_u9#$xfu5(uw!izbq!yu+dtf1*ce5@7w42p^ro*i-+)$yy%'
+DEBUG = env_bool('DJANGO_DEBUG', False)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-rest-apis-local-development-key'
+    else:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is disabled.')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = []
 
@@ -102,11 +122,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Get your Twitter key/secret from https://apps.twitter.com/
-SOCIAL_AUTH_TWITTER_KEY = 'YOUR_TWITTER_API_KEY'
-SOCIAL_AUTH_TWITTER_SECRET = 'YOUR_TWITTER_API_SECRET'
+SOCIAL_AUTH_TWITTER_KEY = require_env('SOCIAL_AUTH_TWITTER_KEY', '')
+SOCIAL_AUTH_TWITTER_SECRET = require_env('SOCIAL_AUTH_TWITTER_SECRET', '')
 
-TWITTER_ACCESS_TOKEN = 'YOUR_TWITTER_ACCESS_TOKEN'
-TWITTER_ACCESS_TOKEN_SECRET = 'YOUR_TWITTER_ACCESS_TOKEN_SECRET'
+TWITTER_ACCESS_TOKEN = require_env('TWITTER_ACCESS_TOKEN', '')
+TWITTER_ACCESS_TOKEN_SECRET = require_env('TWITTER_ACCESS_TOKEN_SECRET', '')
 
 SOCIAL_AUTH_LOGIN_URL          = '/'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/home'

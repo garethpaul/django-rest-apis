@@ -6,3 +6,8 @@
 app/settings_my.py
 fabfile.py
 db.sqlite3
+.env
+.env.*
+!.env.example
+.venv/
+venv/
