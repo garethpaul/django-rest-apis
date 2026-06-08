@@ -1,49 +1,78 @@
 # django-rest-apis
 
-<!-- README-OVERVIEW-IMAGE -->
-![Project overview](docs/readme-overview.svg)
+## Overview
 
-django-rest-apis
-=================
+`garethpaul/django-rest-apis` is a Python web API or service project. Sample Django App for Twitter showcasing OAuth and simple REST API calls.
 
-Sample Django App using Twitter OAuth and REST APIs
+This README is based on the checked-in source, manifests, scripts, and repository metadata on the `master` branch. The project language mix found during review was: Python (11).
 
-REQUIREMENTS
-============
+## Repository Contents
 
-To run this sample code, you'll need to install the following libraries:
+- `README.md` - project overview and local usage notes
+- `requirements.txt` - Python dependency or packaging metadata
+- `app` - source or example code
+- `home` - source or example code
+- `manage.py`
+- `SECURITY.md` - security reporting and disclosure guidance
+- `templates` - source or example code
+- `VISION.md` - project direction and maintenance guardrails
 
-- Python Social Auth (https://github.com/omab/python-social-auth)
-- Python Twitter (https://github.com/bear/python-twitter)
-- south (http://south.aeracode.org/)
-- Fabric (http://www.fabfile.org/)
+Additional scan context:
 
-GETTING STARTED
-============
+- Source directories: app, home, templates
+- Dependency and build manifests: requirements.txt
+- Entry points or build surfaces: manage.py
+- Test-looking files: home/tests.py
 
-- Create a Twitter App (https://apps.twitter.com/)
-- Specify your Twitter App tokens in app/settings.py under the following section:
+## Getting Started
 
-    SOCIAL_AUTH_TWITTER_KEY = 'YOUR_TWITTER_API_KEY'
-    SOCIAL_AUTH_TWITTER_SECRET = 'YOUR_TWITTER_API_SECRET'
-    
-    TWITTER_ACCESS_TOKEN = 'YOUR_TWITTER_ACCESS_TOKEN'
-    TWITTER_ACCESS_TOKEN_SECRET = 'YOUR_TWITTER_ACCESS_TOKEN_SECRET'
+### Prerequisites
 
-- To initialize your database, run the from the `sample-djang-app` directory:
+- Git
+- Python matching the era of the project
 
-  python manage.py syncdb
+### Setup
 
-- To start the server, run the following from the `sample-djang-app` directory:
+```bash
+git clone https://github.com/garethpaul/django-rest-apis.git
+cd django-rest-apis
+python -m pip install -r requirements.txt
+```
 
-  fab start
-  
-- Open a browser and go to http://localhost:9000
+The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
 
-NOTES
-============
-If you receive a 401 at login/twitter it is most likely caused by a datetime discrepancy between the server making the requst and the Twitter server.
+## Running or Using the Project
 
-Use NTP to sync time on your server to compensate for the dift.
+- Run Django management commands through `python manage.py ...`.
 
-If you are getting this error on OSX, toggle the "set time zone" checkbox off and back on in Date & Time system preferences for a manual and temporary fix. It has been reported that OSX 10.9 Mavericks has an issue with time drift.
+## Testing and Verification
+
+- `python -m pytest` or the test runner used by the files above
+
+When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
+
+## Configuration and Secrets
+
+- Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+
+## Security and Privacy Notes
+
+- Review changes touching authentication or token handling; examples from the scan include app/settings.py, app/urls.py, home/views.py, requirements.txt, and 1 more.
+- Review changes touching external API calls or credential-adjacent configuration; examples from the scan include app/settings.py, home/views.py, requirements.txt, templates/home.html, and 1 more.
+- Review changes touching network requests, sockets, or service endpoints; examples from the scan include app/settings.py, app/urls.py, app/wsgi.py, fabfile.py, and 6 more.
+
+## Maintenance Notes
+
+- See `SECURITY.md` for vulnerability reporting and safe research guidance.
+- See `VISION.md` for project direction and contribution guardrails.
+
+## Contributing
+
+Keep changes small and tied to the project that is already present in this repository. For code changes, document the toolchain used, avoid committing generated dependency directories or local configuration, and update this README when setup or verification steps change.
+
+## Existing Project Notes
+
+Prior README summary:
+
+> django-rest-apis <!-- README-OVERVIEW-IMAGE --> django-rest-apis ================= Sample Django App using Twitter OAuth and REST APIs REQUIREMENTS ============ To run this sample code, you'll need to install the following libraries:
+
