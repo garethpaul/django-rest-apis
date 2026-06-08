@@ -69,8 +69,9 @@ scripts/check-baseline.sh
 
 The guard verifies that `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, and Twitter
 credential settings are environment-driven and that the old hardcoded
-`SECRET_KEY` is gone. It also checks POST-only status submission, safe Twitter
-status links, and pinned legacy dependency ranges.
+`SECRET_KEY` is gone. It also runs no-Django-runtime settings helper tests,
+checks POST-only status submission, safe Twitter status links, and pinned legacy
+dependency ranges.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -93,6 +94,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.
 - See `CHANGES.md` for maintenance history.
+- See `docs/plans/2026-06-08-settings-helper-regression-tests.md` for the
+  executable settings helper test plan.
 
 ## Contributing
 

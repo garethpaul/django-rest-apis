@@ -9,3 +9,4 @@
   links with HTTPS plus safe external-link attributes.
 - Pinned the legacy dependency ranges to the Django 1.6-era stack.
 - Added a static baseline guard for the legacy Django settings security contract.
+- Added no-Django-runtime regression tests for settings helper behavior.

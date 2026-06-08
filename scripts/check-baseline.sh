@@ -27,7 +27,9 @@ for path in \
   "app/settings.py" \
   "home/views.py" \
   "templates/home.html" \
+  "scripts/test-settings-helpers.py" \
   "docs/plans/2026-06-08-django-settings-security-baseline.md" \
+  "docs/plans/2026-06-08-settings-helper-regression-tests.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -106,6 +108,12 @@ if ! grep -Fq "status: completed" "$PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
+  printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
+  exit 1
+fi
+
 python3 -m py_compile "$SETTINGS" "$VIEWS"
+python3 "$ROOT_DIR/scripts/test-settings-helpers.py"
 
 printf '%s\n' "Django settings security baseline checks passed."
