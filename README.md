@@ -100,4 +100,4 @@ Keep changes small and tied to the project that is already present in this repos
 
 Prior README summary:
 
-> django-rest-apis <!-- README-OVERVIEW-IMAGE --> django-rest-apis ================= Sample Django App using Twitter OAuth and REST APIs REQUIREMENTS ============ To run this sample code, you'll need to install the following libraries:
+> django-rest-apis django-rest-apis ================= Sample Django App using Twitter OAuth and REST APIs REQUIREMENTS ============ To run this sample code, you'll need to install the following libraries:
