@@ -39,7 +39,6 @@ Canonical security policy and reporting:
 
 - [`SECURITY.md`](SECURITY.md)
 
-
 Twitter API keys, access tokens, and token secrets must not be committed.
 Configuration should fail clearly when credentials are absent.
 
