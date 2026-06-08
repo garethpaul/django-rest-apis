@@ -1,5 +1,8 @@
 # django-rest-apis
 
+<!-- README-OVERVIEW-IMAGE -->
+![Project overview](docs/readme-overview.svg)
+
 ## Overview
 
 `garethpaul/django-rest-apis` is a Python web API or service project. Sample Django App for Twitter showcasing OAuth and simple REST API calls.
@@ -75,4 +78,3 @@ Keep changes small and tied to the project that is already present in this repos
 Prior README summary:
 
 > django-rest-apis <!-- README-OVERVIEW-IMAGE --> django-rest-apis ================= Sample Django App using Twitter OAuth and REST APIs REQUIREMENTS ============ To run this sample code, you'll need to install the following libraries:
-
