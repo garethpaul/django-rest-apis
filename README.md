@@ -69,7 +69,7 @@ scripts/check-baseline.sh
 
 The guard verifies that `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, and Twitter
 credential settings are environment-driven and that the old hardcoded
-`SECRET_KEY` is gone. It also runs no-Django-runtime settings helper tests,
+`SECRET_KEY` and development fallback key are gone. It also runs no-Django-runtime settings helper tests,
 checks POST-only status submission, safe Twitter status links, and pinned legacy
 dependency ranges.
 

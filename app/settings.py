@@ -38,12 +38,7 @@ def env_list(name, default=''):
 
 # SECURITY WARNING: keep the secret key used in production secret!
 DEBUG = env_bool('DJANGO_DEBUG', False)
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-if not SECRET_KEY:
-    if DEBUG:
-        SECRET_KEY = 'django-rest-apis-local-development-key'
-    else:
-        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is disabled.')
+SECRET_KEY = require_env('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 TEMPLATE_DEBUG = DEBUG

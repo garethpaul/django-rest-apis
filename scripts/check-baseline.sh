@@ -39,6 +39,11 @@ if grep -Fq ')e-_u9#$xfu5(uw!izbq!yu+dtf1*ce5@7w42p^ro*i-+)$yy%' "$SETTINGS"; th
   exit 1
 fi
 
+if grep -Fq "django-rest-apis-local-development-key" "$SETTINGS"; then
+  printf '%s\n' "app/settings.py must not contain a committed development SECRET_KEY fallback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "DJANGO_SECRET_KEY" "$SETTINGS" || ! grep -Fq "DJANGO_DEBUG" "$SETTINGS"; then
   printf '%s\n' "Django SECRET_KEY and DEBUG must be controlled by environment variables." >&2
   exit 1
@@ -108,8 +113,8 @@ if ! grep -Fq "status: completed" "$PLAN"; then
   exit 1
 fi
 
-if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
-  printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
+if ! grep -Fq "test_debug_mode_requires_secret_key" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
+  printf '%s\n' "Settings helper tests must cover the debug-mode secret-key failure." >&2
   exit 1
 fi
 

@@ -49,12 +49,19 @@ class SettingsHelperTests(unittest.TestCase):
         with self.assertRaises(ImproperlyConfigured):
             load_settings({"DJANGO_DEBUG": "0"})
 
-    def test_debug_mode_allows_local_secret_key_fallback(self):
-        settings = load_settings({"DJANGO_DEBUG": "1"})
+    def test_debug_mode_requires_secret_key(self):
+        with self.assertRaises(ImproperlyConfigured):
+            load_settings({"DJANGO_DEBUG": "1"})
+
+    def test_debug_mode_uses_configured_secret_key(self):
+        settings = load_settings({
+            "DJANGO_DEBUG": "1",
+            "DJANGO_SECRET_KEY": "debug-secret",
+        })
 
         self.assertTrue(settings.DEBUG)
         self.assertEqual(settings.TEMPLATE_DEBUG, settings.DEBUG)
-        self.assertEqual(settings.SECRET_KEY, "django-rest-apis-local-development-key")
+        self.assertEqual(settings.SECRET_KEY, "debug-secret")
 
     def test_secret_key_and_allowed_hosts_are_environment_driven(self):
         settings = load_settings({
@@ -67,7 +74,10 @@ class SettingsHelperTests(unittest.TestCase):
         self.assertEqual(settings.ALLOWED_HOSTS, ["example.com", "api.example.com"])
 
     def test_env_bool_parses_expected_truthy_values(self):
-        settings = load_settings({"DJANGO_DEBUG": "1"})
+        settings = load_settings({
+            "DJANGO_DEBUG": "1",
+            "DJANGO_SECRET_KEY": "test-secret",
+        })
         original_env = os.environ.copy()
         try:
             for value in ("1", "true", "yes", "on"):
