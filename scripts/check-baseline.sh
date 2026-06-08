@@ -8,6 +8,8 @@ HOME_TEMPLATE="$ROOT_DIR/templates/home.html"
 REQUIREMENTS="$ROOT_DIR/requirements.txt"
 README="$ROOT_DIR/README.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-settings-security-baseline.md"
+STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-status-normalization.md"
+VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
   path=$1
@@ -28,8 +30,10 @@ for path in \
   "home/views.py" \
   "templates/home.html" \
   "scripts/test-settings-helpers.py" \
+  "scripts/test-view-helpers.py" \
   "docs/plans/2026-06-08-django-settings-security-baseline.md" \
   "docs/plans/2026-06-08-settings-helper-regression-tests.md" \
+  "docs/plans/2026-06-08-twitter-status-normalization.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -76,6 +80,11 @@ if grep -Fq "request.REQUEST" "$VIEWS" || ! grep -Fq "request.POST.get(\"status\
   exit 1
 fi
 
+if ! grep -Fq "def normalize_status" "$VIEWS" || ! grep -Fq "MAX_STATUS_LENGTH = 280" "$VIEWS"; then
+  printf '%s\n' "home view must normalize and bound submitted Twitter status text." >&2
+  exit 1
+fi
+
 if ! grep -Fq "ImproperlyConfigured" "$VIEWS"; then
   printf '%s\n' "Twitter API setup must fail clearly when credentials are missing." >&2
   exit 1
@@ -103,8 +112,18 @@ if ! grep -Fq "scripts/check-baseline.sh" "$README" || ! grep -Fq "DJANGO_SECRET
   exit 1
 fi
 
+if ! grep -Fq "status normalization" "$README"; then
+  printf '%s\n' "README must document the Twitter status normalization checks." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status: completed" "$PLAN"; then
   printf '%s\n' "Plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$STATUS_PLAN"; then
+  printf '%s\n' "Status normalization plan must be marked completed." >&2
   exit 1
 fi
 
@@ -113,7 +132,13 @@ if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py
   exit 1
 fi
 
-python3 -m py_compile "$SETTINGS" "$VIEWS"
+if ! grep -Fq "test_normalize_status_ignores_overlong_text" "$VIEW_TESTS"; then
+  printf '%s\n' "View helper tests must cover overlong status submissions." >&2
+  exit 1
+fi
+
+python3 -m py_compile "$SETTINGS" "$VIEWS" "$VIEW_TESTS"
 python3 "$ROOT_DIR/scripts/test-settings-helpers.py"
+python3 "$VIEW_TESTS"
 
 printf '%s\n' "Django settings security baseline checks passed."

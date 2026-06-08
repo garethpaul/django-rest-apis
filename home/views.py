@@ -6,6 +6,18 @@ from django.core.exceptions import ImproperlyConfigured
 from social.apps.django_app.default.models import UserSocialAuth
 import twitter
 
+MAX_STATUS_LENGTH = 280
+
+
+def normalize_status(status):
+    if status is None:
+        return None
+    status = status.strip()
+    if not status or len(status) > MAX_STATUS_LENGTH:
+        return None
+    return status
+
+
 def login(request):
     context = {"request": request}
     return render_to_response('login.html', context, context_instance=RequestContext(request))
@@ -13,7 +25,7 @@ def login(request):
 @login_required
 def home(request):
     
-    status = request.POST.get("status", None)
+    status = normalize_status(request.POST.get("status", None))
     
     api = get_twitter(request.user)
     if status:

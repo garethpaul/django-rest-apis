@@ -27,7 +27,7 @@ Next priorities:
 - Keep credentials out of tracked settings and covered by the baseline guard
 - Add README notes for supported Python and Django versions
 - Modernize Django and dependency usage in a dedicated pass
-- Add tests around views, OAuth configuration boundaries, and API wrappers
+- Add tests around OAuth configuration boundaries and API wrappers
 
 Contribution rules:
 

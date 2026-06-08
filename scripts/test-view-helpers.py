@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+import importlib.util
+import pathlib
+import sys
+import types
+import unittest
+
+
+ROOT_DIR = pathlib.Path(__file__).resolve().parents[1]
+VIEWS_PATH = ROOT_DIR / "home" / "views.py"
+
+
+class ImproperlyConfigured(Exception):
+    pass
+
+
+def identity_decorator(function=None, **_kwargs):
+    if function is None:
+        return lambda wrapped: wrapped
+    return function
+
+
+def install_stubs():
+    django = types.ModuleType("django")
+    shortcuts = types.ModuleType("django.shortcuts")
+    shortcuts.render_to_response = lambda *args, **kwargs: (args, kwargs)
+    shortcuts.RequestContext = lambda request: request
+    shortcuts.HttpResponseRedirect = lambda target: target
+
+    contrib = types.ModuleType("django.contrib")
+    auth = types.ModuleType("django.contrib.auth")
+    decorators = types.ModuleType("django.contrib.auth.decorators")
+    decorators.login_required = identity_decorator
+    decorators.user_passes_test = identity_decorator
+    auth.decorators = decorators
+    auth.logout = lambda request: None
+    contrib.auth = auth
+
+    conf = types.ModuleType("django.conf")
+    conf.settings = types.SimpleNamespace(
+        SOCIAL_AUTH_TWITTER_KEY="consumer-key",
+        SOCIAL_AUTH_TWITTER_SECRET="consumer-secret",
+        TWITTER_ACCESS_TOKEN="access-token",
+        TWITTER_ACCESS_TOKEN_SECRET="access-token-secret",
+    )
+
+    core = types.ModuleType("django.core")
+    exceptions = types.ModuleType("django.core.exceptions")
+    exceptions.ImproperlyConfigured = ImproperlyConfigured
+    core.exceptions = exceptions
+
+    social = types.ModuleType("social")
+    social_apps = types.ModuleType("social.apps")
+    social_django = types.ModuleType("social.apps.django_app")
+    social_default = types.ModuleType("social.apps.django_app.default")
+    social_models = types.ModuleType("social.apps.django_app.default.models")
+    social_models.UserSocialAuth = object
+    social_default.models = social_models
+    social_django.default = social_default
+    social_apps.django_app = social_django
+    social.apps = social_apps
+
+    twitter = types.ModuleType("twitter")
+    twitter.Api = object
+
+    modules = {
+        "django": django,
+        "django.shortcuts": shortcuts,
+        "django.contrib": contrib,
+        "django.contrib.auth": auth,
+        "django.contrib.auth.decorators": decorators,
+        "django.conf": conf,
+        "django.core": core,
+        "django.core.exceptions": exceptions,
+        "social": social,
+        "social.apps": social_apps,
+        "social.apps.django_app": social_django,
+        "social.apps.django_app.default": social_default,
+        "social.apps.django_app.default.models": social_models,
+        "twitter": twitter,
+    }
+    sys.modules.update(modules)
+
+
+def load_views_module():
+    install_stubs()
+    module_name = "views_under_test"
+    spec = importlib.util.spec_from_file_location(module_name, VIEWS_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+views = load_views_module()
+
+
+class ViewHelperTests(unittest.TestCase):
+    def test_normalize_status_strips_text(self):
+        self.assertEqual(views.normalize_status("  hello twitter  "), "hello twitter")
+
+    def test_normalize_status_ignores_empty_text(self):
+        self.assertIsNone(views.normalize_status(None))
+        self.assertIsNone(views.normalize_status(""))
+        self.assertIsNone(views.normalize_status("   "))
+
+    def test_normalize_status_ignores_overlong_text(self):
+        self.assertIsNone(views.normalize_status("x" * 281))
+
+
+if __name__ == "__main__":
+    unittest.main()
