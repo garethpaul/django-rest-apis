@@ -40,7 +40,7 @@ Configuration should fail clearly when credentials are absent.
 
 OAuth callback and REST behavior should avoid logging tokens or user data.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Hardcoded real Twitter credentials
 - Broad Django upgrades bundled with unrelated feature work
