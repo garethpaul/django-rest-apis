@@ -1,5 +1,8 @@
 ## Django REST APIs Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 Django REST APIs is a sample Django app for Twitter OAuth and simple REST API
 calls.
 
