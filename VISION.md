@@ -46,3 +46,6 @@ OAuth callback and REST behavior should avoid logging tokens or user data.
 - Broad Django upgrades bundled with unrelated feature work
 - API calls that log or expose user tokens
 - Setup changes that leave the sample impossible to run from docs
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
