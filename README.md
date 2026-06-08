@@ -17,6 +17,18 @@ GETTING STARTED
 ============
 
 - Create a Twitter App (https://apps.twitter.com/)
+- Set a deployment-specific Django secret key before starting the app:
+
+    export DJANGO_SECRET_KEY="$(python -c 'import base64, os; print(base64.b64encode(os.urandom(32)).decode("ascii"))')"
+
+- For local development, enable debug explicitly when needed:
+
+    export DJANGO_DEBUG=true
+
+- For deployment, set the allowed hostnames:
+
+    export DJANGO_ALLOWED_HOSTS=example.com,www.example.com
+
 - Specify your Twitter App tokens in app/settings.py under the following section:
 
     SOCIAL_AUTH_TWITTER_KEY = 'YOUR_TWITTER_API_KEY'
