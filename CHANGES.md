@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Fell back to environment Twitter access tokens when the saved social-auth row
+  is missing.
 - Changed logout from a GET link to a CSRF-protected POST-only form and added a
   source baseline guard.
 

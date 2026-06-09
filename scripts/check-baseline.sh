@@ -12,6 +12,7 @@ PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-settings-security-baseline.md"
 STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-status-normalization.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-check-wrapper.md"
 TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-token-fallback.md"
+SOCIAL_AUTH_ROW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-social-auth-row-fallback.md"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -42,6 +43,7 @@ for path in \
   "docs/plans/2026-06-08-twitter-status-normalization.md" \
   "docs/plans/2026-06-08-twitter-token-fallback.md" \
   "docs/plans/2026-06-09-post-only-logout.md" \
+  "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -150,8 +152,19 @@ if ! grep -Fq "missing social OAuth token fallback" "$README"; then
   exit 1
 fi
 
+if ! grep -Fq "social-auth row fallback" "$README" ||
+  ! grep -Fq "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" "$README"; then
+  printf '%s\n' "README must document missing social-auth row fallback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "POST-only logout" "$README"; then
   printf '%s\n' "README must document the POST-only logout guard." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Fall back to environment Twitter tokens" "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must keep social-auth fallback direction visible." >&2
   exit 1
 fi
 
@@ -180,6 +193,11 @@ if ! grep -Fq "status: completed" "$TOKEN_PLAN" || ! grep -Fq "make check" "$TOK
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$SOCIAL_AUTH_ROW_PLAN" || ! grep -Fq "make check" "$SOCIAL_AUTH_ROW_PLAN"; then
+  printf '%s\n' "Twitter social-auth row fallback plan must be marked completed and record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-post-only-logout.md"; then
   printf '%s\n' "POST-only logout plan must be marked completed." >&2
   exit 1
@@ -205,8 +223,18 @@ if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_mis
   exit 1
 fi
 
+if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_auth_is_missing" "$VIEW_TESTS"; then
+  printf '%s\n' "View helper tests must cover missing social-auth row fallback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "extra_data.get('access_token')" "$VIEWS"; then
   printf '%s\n' "get_twitter must read optional social OAuth token data without KeyError." >&2
+  exit 1
+fi
+
+if ! grep -Fq "except UserSocialAuth.DoesNotExist" "$VIEWS"; then
+  printf '%s\n' "get_twitter must fall back when the social-auth row is missing." >&2
   exit 1
 fi
 

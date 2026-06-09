@@ -53,7 +53,11 @@ def get_twitter(user):
     access_token_key=settings.TWITTER_ACCESS_TOKEN
     access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET
 
-    usa = UserSocialAuth.objects.get(user=user, provider='twitter')
+    try:
+        usa = UserSocialAuth.objects.get(user=user, provider='twitter')
+    except UserSocialAuth.DoesNotExist:
+        usa = None
+
     if usa:
         extra_data = getattr(usa, 'extra_data', {}) or {}
         access_token = extra_data.get('access_token')
