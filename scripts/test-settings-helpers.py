@@ -66,14 +66,14 @@ class SettingsHelperTests(unittest.TestCase):
         self.assertEqual(settings.SECRET_KEY, "test-secret")
         self.assertEqual(settings.ALLOWED_HOSTS, ["example.com", "api.example.com"])
 
-    def test_env_bool_parses_expected_truthy_values(self):
+    def test_env_bool_strips_and_parses_expected_truthy_values(self):
         settings = load_settings({"DJANGO_DEBUG": "1"})
         original_env = os.environ.copy()
         try:
-            for value in ("1", "true", "yes", "on"):
+            for value in ("1", "true", " TRUE ", " yes ", "on"):
                 os.environ["FEATURE_FLAG"] = value
                 self.assertTrue(settings.env_bool("FEATURE_FLAG"))
-            os.environ["FEATURE_FLAG"] = "0"
+            os.environ["FEATURE_FLAG"] = " off "
             self.assertFalse(settings.env_bool("FEATURE_FLAG"))
         finally:
             os.environ.clear()

@@ -2,6 +2,7 @@
 
 ## 2026-06-09
 
+- Normalized boolean environment flag parsing before evaluating `DJANGO_DEBUG`.
 - Raised a clear Django configuration error when Twitter access tokens are
   missing after social-auth and environment fallbacks.
 - Ignored blank saved Twitter OAuth token values so valid environment fallback

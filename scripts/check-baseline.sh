@@ -15,6 +15,7 @@ TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-token-fallback.md"
 SOCIAL_AUTH_ROW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-social-auth-row-fallback.md"
 BLANK_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-blank-token-fallback.md"
 ACCESS_TOKEN_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-access-token-error.md"
+ENV_BOOL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-django-env-bool-normalization.md"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -46,6 +47,7 @@ for path in \
   "docs/plans/2026-06-08-twitter-token-fallback.md" \
   "docs/plans/2026-06-09-post-only-logout.md" \
   "docs/plans/2026-06-09-twitter-access-token-error.md" \
+  "docs/plans/2026-06-09-django-env-bool-normalization.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
   "scripts/check-baseline.sh"; do
@@ -59,6 +61,11 @@ fi
 
 if ! grep -Fq "DJANGO_SECRET_KEY" "$SETTINGS" || ! grep -Fq "DJANGO_DEBUG" "$SETTINGS"; then
   printf '%s\n' "Django SECRET_KEY and DEBUG must be controlled by environment variables." >&2
+  exit 1
+fi
+
+if ! grep -Fq "value.strip().lower()" "$SETTINGS"; then
+  printf '%s\n' "Django boolean environment flags must strip whitespace before parsing." >&2
   exit 1
 fi
 
@@ -174,6 +181,12 @@ if ! grep -Fq "missing Twitter access tokens fail clearly" "$README" ||
   exit 1
 fi
 
+if ! grep -Fq "parsing trims whitespace" "$README" ||
+  ! grep -Fq "docs/plans/2026-06-09-django-env-bool-normalization.md" "$README"; then
+  printf '%s\n' "README must document boolean environment flag normalization." >&2
+  exit 1
+fi
+
 if ! grep -Fq "POST-only logout" "$README"; then
   printf '%s\n' "README must document the POST-only logout guard." >&2
   exit 1
@@ -191,6 +204,11 @@ fi
 
 if ! grep -Fq "Fail clearly when Twitter access tokens are absent" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION.md must keep missing access-token error handling visible." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Normalize boolean environment flags" "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must keep boolean environment flag normalization visible." >&2
   exit 1
 fi
 
@@ -255,8 +273,23 @@ if ! grep -Fq "make check" "$ACCESS_TOKEN_ERROR_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$ENV_BOOL_PLAN"; then
+  printf '%s\n' "Django env bool normalization plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$ENV_BOOL_PLAN"; then
+  printf '%s\n' "Django env bool normalization plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
   printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
+  exit 1
+fi
+
+if ! grep -Fq "test_env_bool_strips_and_parses_expected_truthy_values" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
+  printf '%s\n' "Settings helper tests must cover whitespace-normalized boolean flags." >&2
   exit 1
 fi
 
