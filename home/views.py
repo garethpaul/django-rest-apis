@@ -19,6 +19,16 @@ def normalize_status(status):
     return status
 
 
+def normalize_token(value):
+    if value is None:
+        return None
+    try:
+        value = value.strip()
+    except AttributeError:
+        pass
+    return value or None
+
+
 def login(request):
     context = {"request": request}
     return render_to_response('login.html', context, context_instance=RequestContext(request))
@@ -47,11 +57,13 @@ def logout(request):
 
 def get_twitter(user):
 
-    if not settings.SOCIAL_AUTH_TWITTER_KEY or not settings.SOCIAL_AUTH_TWITTER_SECRET:
+    consumer_key = normalize_token(settings.SOCIAL_AUTH_TWITTER_KEY)
+    consumer_secret = normalize_token(settings.SOCIAL_AUTH_TWITTER_SECRET)
+    if not consumer_key or not consumer_secret:
         raise ImproperlyConfigured('Twitter consumer key and secret must be configured in the environment.')
 
-    access_token_key=settings.TWITTER_ACCESS_TOKEN
-    access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET
+    access_token_key = normalize_token(settings.TWITTER_ACCESS_TOKEN)
+    access_token_secret = normalize_token(settings.TWITTER_ACCESS_TOKEN_SECRET)
 
     try:
         usa = UserSocialAuth.objects.get(user=user, provider='twitter')
@@ -62,8 +74,8 @@ def get_twitter(user):
         extra_data = getattr(usa, 'extra_data', {}) or {}
         access_token = extra_data.get('access_token')
         if isinstance(access_token, dict):
-            access_token_key = access_token.get('oauth_token', access_token_key)
-            access_token_secret = access_token.get('oauth_token_secret', access_token_secret)
+            access_token_key = normalize_token(access_token.get('oauth_token')) or access_token_key
+            access_token_secret = normalize_token(access_token.get('oauth_token_secret')) or access_token_secret
 
     if not access_token_key or not access_token_secret:
         raise Exception('No user for twitter API call')
@@ -71,8 +83,8 @@ def get_twitter(user):
     api = twitter.Api(
         # base_url='https://api.twitter.com/1.1?include_cards=1&include_entities=1',
         base_url='https://api.twitter.com/1.1',
-        consumer_key=settings.SOCIAL_AUTH_TWITTER_KEY,
-        consumer_secret=settings.SOCIAL_AUTH_TWITTER_SECRET,
+        consumer_key=consumer_key,
+        consumer_secret=consumer_secret,
         access_token_key=access_token_key,
         access_token_secret=access_token_secret)
 

@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Ignored blank saved Twitter OAuth token values so valid environment fallback
+  tokens remain usable and exposed a Python compile `make build` gate.
 - Fell back to environment Twitter access tokens when the saved social-auth row
   is missing.
 - Changed logout from a GET link to a CSRF-protected POST-only form and added a

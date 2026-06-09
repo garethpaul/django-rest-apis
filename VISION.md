@@ -22,6 +22,7 @@ Priority:
 - Preserve the documented legacy setup for Django, south, Fabric, and python-twitter
 - Keep account-changing actions behind POST and CSRF protection
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
+- Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Keep time-drift troubleshooting visible for OAuth failures
 
 Next priorities:

@@ -75,8 +75,9 @@ the repository root. The guard verifies that `DJANGO_SECRET_KEY`,
 the old hardcoded `SECRET_KEY` is gone. It also runs no-Django-runtime settings
 helper tests, checks POST-only status submission, Twitter status normalization,
 safe Twitter status links, missing social OAuth token fallback, missing
-social-auth row fallback, and pinned legacy dependency ranges. Logout is kept
-behind a CSRF-protected POST-only form instead of a GET link.
+social-auth row fallback, blank social OAuth token fallback, and pinned legacy
+dependency ranges. Logout is kept behind a CSRF-protected POST-only form
+instead of a GET link.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -105,6 +106,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   social-auth token fallback coverage.
 - See `docs/plans/2026-06-09-twitter-social-auth-row-fallback.md` for missing
   social-auth row fallback coverage.
+- See `docs/plans/2026-06-09-twitter-blank-token-fallback.md` for blank social
+  OAuth token fallback coverage.
 - See `docs/plans/2026-06-09-post-only-logout.md` for the POST-only logout
   guard.
 
