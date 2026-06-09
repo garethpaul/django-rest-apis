@@ -2,6 +2,7 @@
 
 ## 2026-06-08
 
+- Added a root `make check` wrapper for the source baseline and helper tests.
 - Allowed Twitter API setup to fall back to environment access tokens when a
   social-auth record has no stored OAuth token data.
 - Moved Django `SECRET_KEY` and debug mode to environment-driven settings.

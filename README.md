@@ -18,6 +18,7 @@ This README is based on the checked-in source, manifests, scripts, and repositor
 - `home` - source or example code
 - `manage.py`
 - `SECURITY.md` - security reporting and disclosure guidance
+- `Makefile` - repository-level verification wrapper
 - `scripts/check-baseline.sh` - source-level settings security guard
 - `templates` - source or example code
 - `VISION.md` - project direction and maintenance guardrails
@@ -26,7 +27,7 @@ Additional scan context:
 
 - Source directories: app, home, scripts, templates
 - Dependency and build manifests: requirements.txt
-- Entry points or build surfaces: manage.py, `scripts/check-baseline.sh`
+- Entry points or build surfaces: manage.py, `Makefile`, `scripts/check-baseline.sh`
 - Test-looking files: home/tests.py
 
 ## Getting Started
@@ -64,15 +65,17 @@ The setup commands above are derived from repository files. Legacy mobile, Pytho
 Run the source-level settings security guard before committing:
 
 ```bash
+make check
 scripts/check-baseline.sh
 ```
 
-The guard verifies that `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, and Twitter
-credential settings are environment-driven and that the old hardcoded
-`SECRET_KEY` is gone. It also runs no-Django-runtime settings helper tests,
-checks POST-only status submission, Twitter status normalization, safe Twitter
-status links, missing social OAuth token fallback, and pinned legacy dependency
-ranges.
+`make check` runs the source baseline and no-Django-runtime helper tests from
+the repository root. The guard verifies that `DJANGO_SECRET_KEY`,
+`DJANGO_DEBUG`, and Twitter credential settings are environment-driven and that
+the old hardcoded `SECRET_KEY` is gone. It also runs no-Django-runtime settings
+helper tests, checks POST-only status submission, Twitter status normalization,
+safe Twitter status links, missing social OAuth token fallback, and pinned
+legacy dependency ranges.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -97,6 +100,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `CHANGES.md` for maintenance history.
 - See `docs/plans/2026-06-08-settings-helper-regression-tests.md` for the
   executable settings helper test plan.
+- See `docs/plans/2026-06-08-twitter-token-fallback.md` for optional
+  social-auth token fallback coverage.
 
 ## Contributing
 

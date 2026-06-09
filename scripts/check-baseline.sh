@@ -9,6 +9,8 @@ REQUIREMENTS="$ROOT_DIR/requirements.txt"
 README="$ROOT_DIR/README.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-settings-security-baseline.md"
 STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-status-normalization.md"
+CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-check-wrapper.md"
+TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-token-fallback.md"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -25,15 +27,18 @@ for path in \
   "README.md" \
   "SECURITY.md" \
   "VISION.md" \
+  "Makefile" \
   "requirements.txt" \
   "app/settings.py" \
   "home/views.py" \
   "templates/home.html" \
   "scripts/test-settings-helpers.py" \
   "scripts/test-view-helpers.py" \
+  "docs/plans/2026-06-08-django-check-wrapper.md" \
   "docs/plans/2026-06-08-django-settings-security-baseline.md" \
   "docs/plans/2026-06-08-settings-helper-regression-tests.md" \
   "docs/plans/2026-06-08-twitter-status-normalization.md" \
+  "docs/plans/2026-06-08-twitter-token-fallback.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -112,6 +117,11 @@ if ! grep -Fq "scripts/check-baseline.sh" "$README" || ! grep -Fq "DJANGO_SECRET
   exit 1
 fi
 
+if ! grep -Fq "make check" "$README"; then
+  printf '%s\n' "README must document the root make check gate." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status normalization" "$README"; then
   printf '%s\n' "README must document the Twitter status normalization checks." >&2
   exit 1
@@ -122,6 +132,11 @@ if ! grep -Fq "missing social OAuth token fallback" "$README"; then
   exit 1
 fi
 
+if ! grep -Fq "check: verify" "$ROOT_DIR/Makefile"; then
+  printf '%s\n' "Makefile must expose make check as the repository verification wrapper." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status: completed" "$PLAN"; then
   printf '%s\n' "Plan must be marked completed." >&2
   exit 1
@@ -129,6 +144,16 @@ fi
 
 if ! grep -Fq "status: completed" "$STATUS_PLAN"; then
   printf '%s\n' "Status normalization plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CHECK_PLAN"; then
+  printf '%s\n' "Check wrapper plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$TOKEN_PLAN"; then
+  printf '%s\n' "Twitter token fallback plan must be marked completed." >&2
   exit 1
 fi
 
