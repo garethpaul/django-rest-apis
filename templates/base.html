@@ -4,7 +4,10 @@
 </HEAD>
 <BODY>
 
-You are logged in as {{request.user.username}} [<a href="/logout">Logout</a>]
+You are logged in as {{request.user.username}}
+<form action="/logout" method="post">{% csrf_token %}
+  <input type="submit" value="Logout">
+</form>
 
 <br><br>
 

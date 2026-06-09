@@ -36,6 +36,13 @@ def install_stubs():
     auth.logout = lambda request: None
     contrib.auth = auth
 
+    views_module = types.ModuleType("django.views")
+    http_decorators = types.ModuleType("django.views.decorators.http")
+    http_decorators.require_POST = identity_decorator
+    views_decorators = types.ModuleType("django.views.decorators")
+    views_decorators.http = http_decorators
+    views_module.decorators = views_decorators
+
     conf = types.ModuleType("django.conf")
     conf.settings = types.SimpleNamespace(
         SOCIAL_AUTH_TWITTER_KEY="consumer-key",
@@ -69,6 +76,9 @@ def install_stubs():
         "django.contrib": contrib,
         "django.contrib.auth": auth,
         "django.contrib.auth.decorators": decorators,
+        "django.views": views_module,
+        "django.views.decorators": views_decorators,
+        "django.views.decorators.http": http_decorators,
         "django.conf": conf,
         "django.core": core,
         "django.core.exceptions": exceptions,

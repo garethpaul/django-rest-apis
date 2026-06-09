@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-09
+
+- Changed logout from a GET link to a CSRF-protected POST-only form and added a
+  source baseline guard.
+
 ## 2026-06-08
 
 - Added a root `make check` wrapper for the source baseline and helper tests.

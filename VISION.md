@@ -20,6 +20,7 @@ Priority:
 - Keep the Twitter OAuth flow and REST API examples understandable
 - Avoid committing Twitter keys, access tokens, or local settings secrets
 - Preserve the documented legacy setup for Django, south, Fabric, and python-twitter
+- Keep account-changing actions behind POST and CSRF protection
 - Keep time-drift troubleshooting visible for OAuth failures
 
 Next priorities:

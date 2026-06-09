@@ -5,6 +5,7 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 SETTINGS="$ROOT_DIR/app/settings.py"
 VIEWS="$ROOT_DIR/home/views.py"
 HOME_TEMPLATE="$ROOT_DIR/templates/home.html"
+BASE_TEMPLATE="$ROOT_DIR/templates/base.html"
 REQUIREMENTS="$ROOT_DIR/requirements.txt"
 README="$ROOT_DIR/README.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-settings-security-baseline.md"
@@ -31,6 +32,7 @@ for path in \
   "requirements.txt" \
   "app/settings.py" \
   "home/views.py" \
+  "templates/base.html" \
   "templates/home.html" \
   "scripts/test-settings-helpers.py" \
   "scripts/test-view-helpers.py" \
@@ -39,6 +41,7 @@ for path in \
   "docs/plans/2026-06-08-settings-helper-regression-tests.md" \
   "docs/plans/2026-06-08-twitter-status-normalization.md" \
   "docs/plans/2026-06-08-twitter-token-fallback.md" \
+  "docs/plans/2026-06-09-post-only-logout.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
@@ -95,6 +98,21 @@ if ! grep -Fq "ImproperlyConfigured" "$VIEWS"; then
   exit 1
 fi
 
+if ! grep -Fq "from django.views.decorators.http import require_POST" "$VIEWS" || ! grep -Fq "@require_POST" "$VIEWS"; then
+  printf '%s\n' "Logout view must require POST instead of GET." >&2
+  exit 1
+fi
+
+if grep -Fq 'href="/logout"' "$BASE_TEMPLATE"; then
+  printf '%s\n' "Logout must not be exposed as a GET link." >&2
+  exit 1
+fi
+
+if ! grep -Fq '<form action="/logout" method="post">' "$BASE_TEMPLATE" || ! grep -Fq "{% csrf_token %}" "$BASE_TEMPLATE"; then
+  printf '%s\n' "Logout template must use a CSRF-protected POST form." >&2
+  exit 1
+fi
+
 if ! grep -Fq "https://twitter.com" "$HOME_TEMPLATE" || ! grep -Fq 'rel="noopener noreferrer"' "$HOME_TEMPLATE"; then
   printf '%s\n' "Twitter status links must use HTTPS and safe external-link rel attributes." >&2
   exit 1
@@ -132,6 +150,11 @@ if ! grep -Fq "missing social OAuth token fallback" "$README"; then
   exit 1
 fi
 
+if ! grep -Fq "POST-only logout" "$README"; then
+  printf '%s\n' "README must document the POST-only logout guard." >&2
+  exit 1
+fi
+
 if ! grep -Fq "check: verify" "$ROOT_DIR/Makefile"; then
   printf '%s\n' "Makefile must expose make check as the repository verification wrapper." >&2
   exit 1
@@ -154,6 +177,16 @@ fi
 
 if ! grep -Fq "status: completed" "$TOKEN_PLAN" || ! grep -Fq "make check" "$TOKEN_PLAN"; then
   printf '%s\n' "Twitter token fallback plan must be marked completed and record make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$ROOT_DIR/docs/plans/2026-06-09-post-only-logout.md"; then
+  printf '%s\n' "POST-only logout plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-post-only-logout.md"; then
+  printf '%s\n' "POST-only logout plan must record make check verification." >&2
   exit 1
 fi
 

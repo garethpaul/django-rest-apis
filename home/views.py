@@ -2,6 +2,7 @@ from django.shortcuts import *
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.views.decorators.http import require_POST
 
 from social.apps.django_app.default.models import UserSocialAuth
 import twitter
@@ -37,6 +38,8 @@ def home(request):
     return render_to_response('home.html', context, context_instance=RequestContext(request))
 
 from django.contrib.auth import logout as auth_logout
+@login_required
+@require_POST
 def logout(request):
     """Logs out user"""
     auth_logout(request)
