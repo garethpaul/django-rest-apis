@@ -75,10 +75,11 @@ the repository root. The guard verifies that `DJANGO_SECRET_KEY`,
 the old hardcoded `SECRET_KEY` is gone. It also runs no-Django-runtime settings
 helper tests, checks POST-only status submission, Twitter status normalization,
 safe Twitter status links, missing social OAuth token fallback, missing
-social-auth row fallback, blank social OAuth token fallback, and pinned legacy
-dependency ranges. It also verifies that missing Twitter access tokens fail clearly
-before constructing the API client. `DJANGO_DEBUG` parsing trims whitespace
-before evaluating boolean environment values. Logout is kept behind a
+social-auth row fallback, blank social OAuth token fallback, malformed social
+OAuth token fallback, and pinned legacy dependency ranges. It also verifies
+that missing Twitter access tokens fail clearly before constructing the API
+client. `DJANGO_DEBUG` parsing trims whitespace before evaluating boolean
+environment values. Logout is kept behind a
 CSRF-protected POST-only form instead of a GET link.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
@@ -110,6 +111,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   social-auth row fallback coverage.
 - See `docs/plans/2026-06-09-twitter-blank-token-fallback.md` for blank social
   OAuth token fallback coverage.
+- See `docs/plans/2026-06-09-twitter-malformed-token-fallback.md` for
+  malformed social OAuth token fallback coverage.
 - See `docs/plans/2026-06-09-twitter-access-token-error.md` for the missing
   Twitter access tokens fail clearly guard.
 - See `docs/plans/2026-06-09-django-env-bool-normalization.md` for boolean

@@ -8,6 +8,10 @@ from social.apps.django_app.default.models import UserSocialAuth
 import twitter
 
 MAX_STATUS_LENGTH = 280
+try:
+    STRING_TYPES = (basestring,)
+except NameError:
+    STRING_TYPES = (str,)
 
 
 def normalize_status(status):
@@ -21,6 +25,8 @@ def normalize_status(status):
 
 def normalize_token(value):
     if value is None:
+        return None
+    if not isinstance(value, STRING_TYPES):
         return None
     try:
         value = value.strip()

@@ -16,6 +16,7 @@ SOCIAL_AUTH_ROW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-social-auth-row-fa
 BLANK_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-blank-token-fallback.md"
 ACCESS_TOKEN_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-access-token-error.md"
 ENV_BOOL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-django-env-bool-normalization.md"
+MALFORMED_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-malformed-token-fallback.md"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -48,6 +49,7 @@ for path in \
   "docs/plans/2026-06-09-post-only-logout.md" \
   "docs/plans/2026-06-09-twitter-access-token-error.md" \
   "docs/plans/2026-06-09-django-env-bool-normalization.md" \
+  "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
   "scripts/check-baseline.sh"; do
@@ -175,6 +177,12 @@ if ! grep -Fq "blank social OAuth token fallback" "$README" ||
   exit 1
 fi
 
+if ! grep -Fq "malformed social OAuth token fallback" "$README" ||
+  ! grep -Fq "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" "$README"; then
+  printf '%s\n' "README must document malformed social OAuth token fallback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "missing Twitter access tokens fail clearly" "$README" ||
   ! grep -Fq "docs/plans/2026-06-09-twitter-access-token-error.md" "$README"; then
   printf '%s\n' "README must document missing Twitter access token configuration errors." >&2
@@ -199,6 +207,11 @@ fi
 
 if ! grep -Fq "Ignore blank saved social-auth tokens" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION.md must keep blank social-auth token handling visible." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Ignore malformed saved social-auth tokens" "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must keep malformed social-auth token handling visible." >&2
   exit 1
 fi
 
@@ -283,6 +296,16 @@ if ! grep -Fq "make check" "$ENV_BOOL_PLAN"; then
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$MALFORMED_TOKEN_PLAN"; then
+  printf '%s\n' "Twitter malformed token fallback plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$MALFORMED_TOKEN_PLAN"; then
+  printf '%s\n' "Twitter malformed token fallback plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
   printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
   exit 1
@@ -313,6 +336,11 @@ if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_bla
   exit 1
 fi
 
+if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_malformed" "$VIEW_TESTS"; then
+  printf '%s\n' "View helper tests must cover malformed social OAuth token fallback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "test_get_twitter_raises_configuration_error_when_access_tokens_are_missing" "$VIEW_TESTS"; then
   printf '%s\n' "View helper tests must cover missing Twitter access token configuration errors." >&2
   exit 1
@@ -325,6 +353,11 @@ fi
 
 if ! grep -Fq "def normalize_token" "$VIEWS"; then
   printf '%s\n' "get_twitter must normalize blank credential values before using them." >&2
+  exit 1
+fi
+
+if ! grep -Fq "STRING_TYPES" "$VIEWS" || ! grep -Fq "not isinstance(value, STRING_TYPES)" "$VIEWS"; then
+  printf '%s\n' "get_twitter must ignore malformed non-string credential values." >&2
   exit 1
 fi
 

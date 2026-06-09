@@ -23,6 +23,7 @@ Priority:
 - Keep account-changing actions behind POST and CSRF protection
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
+- Ignore malformed saved social-auth tokens so environment fallbacks remain usable
 - Fail clearly when Twitter access tokens are absent
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep time-drift troubleshooting visible for OAuth failures
