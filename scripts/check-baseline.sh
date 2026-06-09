@@ -117,6 +117,11 @@ if ! grep -Fq "status normalization" "$README"; then
   exit 1
 fi
 
+if ! grep -Fq "missing social OAuth token fallback" "$README"; then
+  printf '%s\n' "README must document missing social OAuth token fallback." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status: completed" "$PLAN"; then
   printf '%s\n' "Plan must be marked completed." >&2
   exit 1
@@ -134,6 +139,16 @@ fi
 
 if ! grep -Fq "test_normalize_status_ignores_overlong_text" "$VIEW_TESTS"; then
   printf '%s\n' "View helper tests must cover overlong status submissions." >&2
+  exit 1
+fi
+
+if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_missing" "$VIEW_TESTS"; then
+  printf '%s\n' "View helper tests must cover missing social OAuth token fallback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "extra_data.get('access_token')" "$VIEWS"; then
+  printf '%s\n' "get_twitter must read optional social OAuth token data without KeyError." >&2
   exit 1
 fi
 

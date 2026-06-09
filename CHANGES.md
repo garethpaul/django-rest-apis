@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- Allowed Twitter API setup to fall back to environment access tokens when a
+  social-auth record has no stored OAuth token data.
 - Moved Django `SECRET_KEY` and debug mode to environment-driven settings.
 - Moved Twitter API credentials and access tokens to environment variables.
 - Made `ALLOWED_HOSTS` environment-driven with local defaults for development.

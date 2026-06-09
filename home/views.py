@@ -52,10 +52,11 @@ def get_twitter(user):
 
     usa = UserSocialAuth.objects.get(user=user, provider='twitter')
     if usa:
-        access_token = usa.extra_data['access_token']
-        if access_token:
-            access_token_key = access_token['oauth_token']
-            access_token_secret = access_token['oauth_token_secret']
+        extra_data = getattr(usa, 'extra_data', {}) or {}
+        access_token = extra_data.get('access_token')
+        if isinstance(access_token, dict):
+            access_token_key = access_token.get('oauth_token', access_token_key)
+            access_token_secret = access_token.get('oauth_token_secret', access_token_secret)
 
     if not access_token_key or not access_token_secret:
         raise Exception('No user for twitter API call')

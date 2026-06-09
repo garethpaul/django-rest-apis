@@ -106,6 +106,36 @@ class ViewHelperTests(unittest.TestCase):
     def test_normalize_status_ignores_overlong_text(self):
         self.assertIsNone(views.normalize_status("x" * 281))
 
+    def test_get_twitter_uses_environment_tokens_when_social_token_is_missing(self):
+        captured = {}
+
+        class FakeManager:
+            def get(self, user, provider):
+                self.user = user
+                self.provider = provider
+                return types.SimpleNamespace(extra_data={})
+
+        def fake_api(**kwargs):
+            captured.update(kwargs)
+            return captured
+
+        original_user_social_auth = views.UserSocialAuth
+        original_api = views.twitter.Api
+
+        try:
+            views.UserSocialAuth = types.SimpleNamespace(objects=FakeManager())
+            views.twitter.Api = fake_api
+
+            user = types.SimpleNamespace(username="sample-user")
+            api = views.get_twitter(user)
+
+            self.assertIs(api, captured)
+            self.assertEqual(captured["access_token_key"], "access-token")
+            self.assertEqual(captured["access_token_secret"], "access-token-secret")
+        finally:
+            views.UserSocialAuth = original_user_social_auth
+            views.twitter.Api = original_api
+
 
 if __name__ == "__main__":
     unittest.main()
