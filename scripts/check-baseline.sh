@@ -14,6 +14,7 @@ CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-check-wrapper.md"
 TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-token-fallback.md"
 SOCIAL_AUTH_ROW_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-social-auth-row-fallback.md"
 BLANK_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-blank-token-fallback.md"
+ACCESS_TOKEN_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-access-token-error.md"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -44,6 +45,7 @@ for path in \
   "docs/plans/2026-06-08-twitter-status-normalization.md" \
   "docs/plans/2026-06-08-twitter-token-fallback.md" \
   "docs/plans/2026-06-09-post-only-logout.md" \
+  "docs/plans/2026-06-09-twitter-access-token-error.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
   "scripts/check-baseline.sh"; do
@@ -166,6 +168,12 @@ if ! grep -Fq "blank social OAuth token fallback" "$README" ||
   exit 1
 fi
 
+if ! grep -Fq "missing Twitter access tokens fail clearly" "$README" ||
+  ! grep -Fq "docs/plans/2026-06-09-twitter-access-token-error.md" "$README"; then
+  printf '%s\n' "README must document missing Twitter access token configuration errors." >&2
+  exit 1
+fi
+
 if ! grep -Fq "POST-only logout" "$README"; then
   printf '%s\n' "README must document the POST-only logout guard." >&2
   exit 1
@@ -178,6 +186,11 @@ fi
 
 if ! grep -Fq "Ignore blank saved social-auth tokens" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION.md must keep blank social-auth token handling visible." >&2
+  exit 1
+fi
+
+if ! grep -Fq "Fail clearly when Twitter access tokens are absent" "$ROOT_DIR/VISION.md"; then
+  printf '%s\n' "VISION.md must keep missing access-token error handling visible." >&2
   exit 1
 fi
 
@@ -232,6 +245,16 @@ if ! grep -Fq "make check" "$ROOT_DIR/docs/plans/2026-06-09-post-only-logout.md"
   exit 1
 fi
 
+if ! grep -Fq "Status: Completed" "$ACCESS_TOKEN_ERROR_PLAN"; then
+  printf '%s\n' "Twitter access token error plan must be marked completed." >&2
+  exit 1
+fi
+
+if ! grep -Fq "make check" "$ACCESS_TOKEN_ERROR_PLAN"; then
+  printf '%s\n' "Twitter access token error plan must record make check verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
   printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
   exit 1
@@ -257,6 +280,11 @@ if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_bla
   exit 1
 fi
 
+if ! grep -Fq "test_get_twitter_raises_configuration_error_when_access_tokens_are_missing" "$VIEW_TESTS"; then
+  printf '%s\n' "View helper tests must cover missing Twitter access token configuration errors." >&2
+  exit 1
+fi
+
 if ! grep -Fq "extra_data.get('access_token')" "$VIEWS"; then
   printf '%s\n' "get_twitter must read optional social OAuth token data without KeyError." >&2
   exit 1
@@ -269,6 +297,12 @@ fi
 
 if ! grep -Fq "except UserSocialAuth.DoesNotExist" "$VIEWS"; then
   printf '%s\n' "get_twitter must fall back when the social-auth row is missing." >&2
+  exit 1
+fi
+
+if grep -Fq "raise Exception('No user for twitter API call')" "$VIEWS" ||
+  ! grep -Fq "Twitter access token and secret must be configured" "$VIEWS"; then
+  printf '%s\n' "get_twitter must fail clearly when Twitter access tokens are missing." >&2
   exit 1
 fi
 

@@ -23,6 +23,7 @@ Priority:
 - Keep account-changing actions behind POST and CSRF protection
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
+- Fail clearly when Twitter access tokens are absent
 - Keep time-drift troubleshooting visible for OAuth failures
 
 Next priorities:

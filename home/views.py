@@ -78,7 +78,7 @@ def get_twitter(user):
             access_token_secret = normalize_token(access_token.get('oauth_token_secret')) or access_token_secret
 
     if not access_token_key or not access_token_secret:
-        raise Exception('No user for twitter API call')
+        raise ImproperlyConfigured('Twitter access token and secret must be configured in social-auth or the environment.')
 
     api = twitter.Api(
         # base_url='https://api.twitter.com/1.1?include_cards=1&include_entities=1',

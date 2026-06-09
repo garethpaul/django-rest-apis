@@ -214,6 +214,33 @@ class ViewHelperTests(unittest.TestCase):
             views.UserSocialAuth = original_user_social_auth
             views.twitter.Api = original_api
 
+    def test_get_twitter_raises_configuration_error_when_access_tokens_are_missing(self):
+        class FakeUserSocialAuth:
+            class DoesNotExist(Exception):
+                pass
+
+            class objects:
+                @staticmethod
+                def get(user, provider):
+                    raise FakeUserSocialAuth.DoesNotExist()
+
+        original_user_social_auth = views.UserSocialAuth
+        original_access_token = views.settings.TWITTER_ACCESS_TOKEN
+        original_access_token_secret = views.settings.TWITTER_ACCESS_TOKEN_SECRET
+
+        try:
+            views.UserSocialAuth = FakeUserSocialAuth
+            views.settings.TWITTER_ACCESS_TOKEN = " "
+            views.settings.TWITTER_ACCESS_TOKEN_SECRET = ""
+
+            user = types.SimpleNamespace(username="sample-user")
+            with self.assertRaises(ImproperlyConfigured):
+                views.get_twitter(user)
+        finally:
+            views.UserSocialAuth = original_user_social_auth
+            views.settings.TWITTER_ACCESS_TOKEN = original_access_token
+            views.settings.TWITTER_ACCESS_TOKEN_SECRET = original_access_token_secret
+
 
 if __name__ == "__main__":
     unittest.main()
