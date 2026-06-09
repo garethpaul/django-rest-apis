@@ -152,8 +152,8 @@ if ! grep -Fq "status: completed" "$CHECK_PLAN"; then
   exit 1
 fi
 
-if ! grep -Fq "status: completed" "$TOKEN_PLAN"; then
-  printf '%s\n' "Twitter token fallback plan must be marked completed." >&2
+if ! grep -Fq "status: completed" "$TOKEN_PLAN" || ! grep -Fq "make check" "$TOKEN_PLAN"; then
+  printf '%s\n' "Twitter token fallback plan must be marked completed and record make check verification." >&2
   exit 1
 fi
 

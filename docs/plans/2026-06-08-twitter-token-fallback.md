@@ -22,6 +22,7 @@ OAuth token data, and fall back to the environment-provided access token pair.
 
 ## Verification
 
+- `make check`
 - `python3 scripts/test-settings-helpers.py`
 - `python3 scripts/test-view-helpers.py`
 - `scripts/check-baseline.sh`
