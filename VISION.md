@@ -26,6 +26,7 @@ Priority:
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable
 - Fail clearly when Twitter access tokens are absent
 - Normalize boolean environment flags before evaluating debug-mode settings
+- Keep GitHub Actions aligned with the local Python `make check` baseline
 - Keep time-drift troubleshooting visible for OAuth failures
 
 Next priorities:
@@ -41,6 +42,8 @@ Contribution rules:
 - Do not mix framework upgrades with behavior changes unless required.
 - Verify `python manage.py` commands in the declared environment.
 - Update setup docs whenever configuration or credentials handling changes.
+- Keep `.github/workflows/check.yml` in sync with the local settings and view
+  helper guard.
 
 ## Security
 

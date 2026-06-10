@@ -17,6 +17,8 @@ BLANK_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-blank-token-fallback.m
 ACCESS_TOKEN_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-access-token-error.md"
 ENV_BOOL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-django-env-bool-normalization.md"
 MALFORMED_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-malformed-token-fallback.md"
+CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
+CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -29,6 +31,7 @@ require_file() {
 
 for path in \
   ".gitignore" \
+  ".github/workflows/check.yml" \
   "CHANGES.md" \
   "README.md" \
   "SECURITY.md" \
@@ -49,12 +52,31 @@ for path in \
   "docs/plans/2026-06-09-post-only-logout.md" \
   "docs/plans/2026-06-09-twitter-access-token-error.md" \
   "docs/plans/2026-06-09-django-env-bool-normalization.md" \
+  "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW" ||
+  ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$CI_WORKFLOW" ||
+  ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$CI_WORKFLOW" ||
+  ! grep -Fq "run: make check" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions workflow must pin actions and run make check across supported Python releases." >&2
+  exit 1
+fi
+
+if ! grep -Fq "permissions:" "$CI_WORKFLOW" || ! grep -Fq "contents: read" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions workflow must keep repository access read-only." >&2
+  exit 1
+fi
+
+if ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 5" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions workflow must support bounded manual verification." >&2
+  exit 1
+fi
 
 if grep -Fq ')e-_u9#$xfu5(uw!izbq!yu+dtf1*ce5@7w42p^ro*i-+)$yy%' "$SETTINGS"; then
   printf '%s\n' "app/settings.py must not contain the old hardcoded SECRET_KEY." >&2
@@ -155,6 +177,11 @@ if ! grep -Fq "make check" "$README"; then
   exit 1
 fi
 
+if ! grep -Fq "Do not install these historical requirements into a modern environment" "$README"; then
+  printf '%s\n' "README must warn against installing the legacy dependency stack on modern hosts." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status normalization" "$README"; then
   printf '%s\n' "README must document the Twitter status normalization checks." >&2
   exit 1
@@ -197,6 +224,15 @@ fi
 
 if ! grep -Fq "POST-only logout" "$README"; then
   printf '%s\n' "README must document the POST-only logout guard." >&2
+  exit 1
+fi
+
+if ! grep -Fq "GitHub Actions" "$README" ||
+  ! grep -Fq "docs/plans/2026-06-10-ci-baseline.md" "$README" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "GitHub Actions" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project docs must record the GitHub Actions CI baseline." >&2
   exit 1
 fi
 
@@ -303,6 +339,12 @@ fi
 
 if ! grep -Fq "make check" "$MALFORMED_TOKEN_PLAN"; then
   printf '%s\n' "Twitter malformed token fallback plan must record make check verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CI_PLAN" ||
+  ! grep -Fq "make check" "$CI_PLAN"; then
+  printf '%s\n' "CI baseline plan must be completed and record make check verification." >&2
   exit 1
 fi
 

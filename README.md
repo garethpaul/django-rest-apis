@@ -42,7 +42,6 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/django-rest-apis.git
 cd django-rest-apis
-python -m pip install -r requirements.txt
 export DJANGO_DEBUG=1
 export DJANGO_SECRET_KEY=local-development-secret
 export DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
@@ -51,6 +50,13 @@ export SOCIAL_AUTH_TWITTER_SECRET=
 export TWITTER_ACCESS_TOKEN=
 export TWITTER_ACCESS_TOKEN_SECRET=
 ```
+
+Do not install these historical requirements into a modern environment.
+`requirements.txt` preserves the Django 1.6-era dependency boundary for
+archival reference; a runnable framework upgrade requires a dedicated
+migration of Django settings, social authentication, templates, URLs,
+migrations, and deployment tooling. The supported modern verification path is
+the isolated standard-library helper suite behind `make check`.
 
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
 
@@ -81,6 +87,10 @@ that missing Twitter access tokens fail clearly before constructing the API
 client. `DJANGO_DEBUG` parsing trims whitespace before evaluating boolean
 environment values. Logout is kept behind a
 CSRF-protected POST-only form instead of a GET link.
+GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 for pushes,
+pull requests, and manual dispatches. The workflow uses commit-pinned actions,
+read-only repository access, and a bounded runtime without installing the
+unsupported Django 1.6 dependency set.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -119,6 +129,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   environment flag normalization.
 - See `docs/plans/2026-06-09-post-only-logout.md` for the POST-only logout
   guard.
+- See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
+  baseline.
 
 ## Contributing
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-10
+
+- Added a GitHub Actions workflow that runs isolated security/helper checks on
+  Python 3.10, 3.12, and 3.14.
+- Pinned workflow actions, limited repository access to read-only, and
+  documented that the Django 1.6 dependency set is archival rather than a
+  modern installation target.
+- Extended the baseline guard and docs to require the hosted CI verification
+  path.
+
 ## 2026-06-09
 
 - Ignored malformed saved Twitter OAuth token values so valid environment
