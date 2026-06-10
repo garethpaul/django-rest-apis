@@ -2,6 +2,9 @@
 
 ## 2026-06-10
 
+- Made session and CSRF cookies always secure when debug is disabled, with a
+  debug-only HTTPS opt-in and isolated helper regression tests.
+- Rooted Make verification to the repository and pinned CI to Ubuntu 24.04.
 - Added a GitHub Actions workflow that runs isolated security/helper checks on
   Python 3.10, 3.12, and 3.14.
 - Pinned workflow actions, limited repository access to read-only, and

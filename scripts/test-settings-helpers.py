@@ -55,6 +55,26 @@ class SettingsHelperTests(unittest.TestCase):
         self.assertTrue(settings.DEBUG)
         self.assertEqual(settings.TEMPLATE_DEBUG, settings.DEBUG)
         self.assertEqual(settings.SECRET_KEY, "django-rest-apis-local-development-key")
+        self.assertFalse(settings.SESSION_COOKIE_SECURE)
+        self.assertFalse(settings.CSRF_COOKIE_SECURE)
+
+    def test_production_always_uses_secure_session_and_csrf_cookies(self):
+        settings = load_settings({
+            "DJANGO_SECRET_KEY": "test-secret",
+            "DJANGO_SECURE_COOKIES": "0",
+        })
+
+        self.assertTrue(settings.SESSION_COOKIE_SECURE)
+        self.assertTrue(settings.CSRF_COOKIE_SECURE)
+
+    def test_debug_https_can_opt_in_to_secure_cookies(self):
+        settings = load_settings({
+            "DJANGO_DEBUG": "1",
+            "DJANGO_SECURE_COOKIES": " yes ",
+        })
+
+        self.assertTrue(settings.SESSION_COOKIE_SECURE)
+        self.assertTrue(settings.CSRF_COOKIE_SECURE)
 
     def test_secret_key_and_allowed_hosts_are_environment_driven(self):
         settings = load_settings({

@@ -18,7 +18,9 @@ ACCESS_TOKEN_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-access-token-er
 ENV_BOOL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-django-env-bool-normalization.md"
 MALFORMED_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-malformed-token-fallback.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
+SECURE_COOKIE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-production-secure-cookies.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
+MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 
 require_file() {
@@ -53,6 +55,7 @@ for path in \
   "docs/plans/2026-06-09-twitter-access-token-error.md" \
   "docs/plans/2026-06-09-django-env-bool-normalization.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
+  "docs/plans/2026-06-10-production-secure-cookies.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
@@ -75,6 +78,17 @@ fi
 
 if ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 5" "$CI_WORKFLOW"; then
   printf '%s\n' "GitHub Actions workflow must support bounded manual verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "runs-on: ubuntu-24.04" "$CI_WORKFLOW"; then
+  printf '%s\n' "GitHub Actions must use the stable Ubuntu 24.04 runner." >&2
+  exit 1
+fi
+
+if ! grep -Fq 'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
+  [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 7 ]; then
+  printf '%s\n' "Make verification must resolve helper scripts from the repository root." >&2
   exit 1
 fi
 
@@ -105,6 +119,13 @@ fi
 
 if ! grep -Fq "DJANGO_ALLOWED_HOSTS" "$SETTINGS" || grep -Eq '^ALLOWED_HOSTS[[:space:]]*=[[:space:]]*\[\]' "$SETTINGS"; then
   printf '%s\n' "ALLOWED_HOSTS must be environment-driven and non-empty by default." >&2
+  exit 1
+fi
+
+if ! grep -Fq "SECURE_COOKIES = not DEBUG or env_bool('DJANGO_SECURE_COOKIES', False)" "$SETTINGS" ||
+  ! grep -Fq "SESSION_COOKIE_SECURE = SECURE_COOKIES" "$SETTINGS" ||
+  ! grep -Fq "CSRF_COOKIE_SECURE = SECURE_COOKIES" "$SETTINGS"; then
+  printf '%s\n' "Production session and CSRF cookies must always use the secure flag." >&2
   exit 1
 fi
 
@@ -348,6 +369,12 @@ if ! grep -Fq "status: completed" "$CI_PLAN" ||
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$SECURE_COOKIE_PLAN" ||
+  ! grep -Fq "make check" "$SECURE_COOKIE_PLAN"; then
+  printf '%s\n' "Production secure cookie plan must be completed and record verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
   printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
   exit 1
@@ -355,6 +382,12 @@ fi
 
 if ! grep -Fq "test_env_bool_strips_and_parses_expected_truthy_values" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
   printf '%s\n' "Settings helper tests must cover whitespace-normalized boolean flags." >&2
+  exit 1
+fi
+
+if ! grep -Fq "test_production_always_uses_secure_session_and_csrf_cookies" "$ROOT_DIR/scripts/test-settings-helpers.py" ||
+  ! grep -Fq "test_debug_https_can_opt_in_to_secure_cookies" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
+  printf '%s\n' "Settings helper tests must cover production and debug secure-cookie behavior." >&2
   exit 1
 fi
 

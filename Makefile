@@ -1,16 +1,17 @@
 .PHONY: build lint test verify check
 
+ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 PYTHON ?= python3
 
 lint:
-	./scripts/check-baseline.sh
+	$(ROOT)scripts/check-baseline.sh
 
 test:
-	$(PYTHON) scripts/test-settings-helpers.py
-	$(PYTHON) scripts/test-view-helpers.py
+	$(PYTHON) $(ROOT)scripts/test-settings-helpers.py
+	$(PYTHON) $(ROOT)scripts/test-view-helpers.py
 
 build:
-	$(PYTHON) -m py_compile app/settings.py home/views.py scripts/test-settings-helpers.py scripts/test-view-helpers.py
+	$(PYTHON) -m py_compile $(ROOT)app/settings.py $(ROOT)home/views.py $(ROOT)scripts/test-settings-helpers.py $(ROOT)scripts/test-view-helpers.py
 
 verify: lint test build
 

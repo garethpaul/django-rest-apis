@@ -36,6 +36,8 @@ Helpful reports include:
 For web services, APIs, sockets, or scraping workflows, prioritize reports involving authentication bypass, authorization errors, injection, server-side request forgery, unsafe deserialization, credential leakage, data exposure, or denial-of-service conditions. Use test accounts and minimal proof-of-concept traffic only.
 
 For this Django sample, missing Twitter access tokens should fail with an explicit Django configuration error before an API client is constructed.
+Production settings must always mark session and CSRF cookies secure; local
+debug mode may opt in when it is served over HTTPS.
 GitHub Actions runs isolated `make check` coverage on Python 3.10, 3.12, and
 3.14 with commit-pinned actions, read-only repository access, and bounded
 execution. CI deliberately does not install the unsupported Django 1.6-era

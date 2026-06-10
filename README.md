@@ -85,10 +85,12 @@ social-auth row fallback, blank social OAuth token fallback, malformed social
 OAuth token fallback, and pinned legacy dependency ranges. It also verifies
 that missing Twitter access tokens fail clearly before constructing the API
 client. `DJANGO_DEBUG` parsing trims whitespace before evaluating boolean
-environment values. Logout is kept behind a
+environment values. When debug is disabled, Django session and CSRF cookies
+always use the secure flag; debug-mode HTTPS testing can opt in with
+`DJANGO_SECURE_COOKIES=1`. Logout is kept behind a
 CSRF-protected POST-only form instead of a GET link.
 GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 for pushes,
-pull requests, and manual dispatches. The workflow uses commit-pinned actions,
+pull requests, and manual dispatches on Ubuntu 24.04. The workflow uses commit-pinned actions,
 read-only repository access, and a bounded runtime without installing the
 unsupported Django 1.6 dependency set.
 
@@ -99,6 +101,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Required environment variables for local app startup are:
   `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`,
+  `DJANGO_SECURE_COOKIES`,
   `SOCIAL_AUTH_TWITTER_KEY`, `SOCIAL_AUTH_TWITTER_SECRET`,
   `TWITTER_ACCESS_TOKEN`, and `TWITTER_ACCESS_TOKEN_SECRET`.
 
@@ -131,6 +134,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   guard.
 - See `docs/plans/2026-06-10-ci-baseline.md` for the hosted GitHub Actions
   baseline.
+- See `docs/plans/2026-06-10-production-secure-cookies.md` for production
+  session and CSRF cookie transport protection.
 
 ## Contributing
 
