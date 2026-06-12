@@ -35,22 +35,40 @@ def normalize_token(value):
     return value or None
 
 
+def load_twitter_home(api, username, status):
+    error = None
+    if status:
+        try:
+            api.PostUpdates(status)
+        except twitter.TwitterError:
+            error = 'Twitter could not post the status right now.'
+
+    try:
+        statuses = api.GetUserTimeline(screen_name=username, count=10)
+    except twitter.TwitterError:
+        statuses = []
+        if error is None:
+            error = 'Twitter could not load the timeline right now.'
+
+    return statuses, error
+
+
 def login(request):
     context = {"request": request}
     return render_to_response('login.html', context, context_instance=RequestContext(request))
 
 @login_required
 def home(request):
-    
     status = normalize_status(request.POST.get("status", None))
-    
+
     api = get_twitter(request.user)
-    if status:
-        api.PostUpdates(status)
-    
-    statuses = api.GetUserTimeline(screen_name=request.user.username, count=10)
-    
-    context = {"request": request, 'statuses': statuses}
+    statuses, twitter_error = load_twitter_home(api, request.user.username, status)
+
+    context = {
+        "request": request,
+        'statuses': statuses,
+        'twitter_error': twitter_error,
+    }
     return render_to_response('home.html', context, context_instance=RequestContext(request))
 
 from django.contrib.auth import logout as auth_logout

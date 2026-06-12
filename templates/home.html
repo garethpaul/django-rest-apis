@@ -11,6 +11,10 @@ Tweet:
   <input type="submit" value="tweet">
 </form>
 
+{% if twitter_error %}
+  <p>{{ twitter_error }}</p>
+{% endif %}
+
 {% if statuses and statuses.0 %}
 
   Statuses:

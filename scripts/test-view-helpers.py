@@ -68,6 +68,7 @@ def install_stubs():
     social.apps = social_apps
 
     twitter = types.ModuleType("twitter")
+    twitter.TwitterError = type("TwitterError", (Exception,), {})
     twitter.Api = object
 
     modules = {
@@ -115,6 +116,37 @@ class ViewHelperTests(unittest.TestCase):
 
     def test_normalize_status_ignores_overlong_text(self):
         self.assertIsNone(views.normalize_status("x" * 281))
+
+    def test_load_twitter_home_preserves_timeline_when_post_fails(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                self.status = status
+                raise views.twitter.TwitterError("provider detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                self.screen_name = screen_name
+                self.count = count
+                return ["existing status"]
+
+        api = FakeApi()
+        statuses, error = views.load_twitter_home(api, "sample-user", "hello")
+
+        self.assertEqual(statuses, ["existing status"])
+        self.assertEqual(error, "Twitter could not post the status right now.")
+        self.assertEqual(api.status, "hello")
+        self.assertEqual(api.screen_name, "sample-user")
+        self.assertEqual(api.count, 10)
+
+    def test_load_twitter_home_returns_stable_error_when_timeline_fails(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                raise views.twitter.TwitterError("provider detail")
+
+        statuses, error = views.load_twitter_home(FakeApi(), "sample-user", None)
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertNotIn("provider detail", error)
 
     def test_get_twitter_uses_environment_tokens_when_social_token_is_missing(self):
         captured = {}

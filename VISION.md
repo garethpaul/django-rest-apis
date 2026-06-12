@@ -25,6 +25,7 @@ Priority:
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable
 - Fail clearly when Twitter access tokens are absent
+- Contain expected Twitter API failures without exposing provider details
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep production session and CSRF cookies transport-secure
 - Keep GitHub Actions aligned with the local Python `make check` baseline
@@ -35,7 +36,7 @@ Next priorities:
 - Keep credentials out of tracked settings and covered by the baseline guard
 - Add README notes for supported Python and Django versions
 - Modernize Django and dependency usage in a dedicated pass
-- Add tests around OAuth configuration boundaries and API wrappers
+- Keep tests around OAuth configuration boundaries and API wrappers
 
 Contribution rules:
 

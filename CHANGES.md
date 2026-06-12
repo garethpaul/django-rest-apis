@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-12
+
+- Contained expected python-twitter posting and timeline failures so the home
+  page renders stable generic messages instead of returning an internal error.
+- Preserved available timeline results when a status post fails and added
+  isolated helper regressions for both provider failure paths.
+
 ## 2026-06-10
 
 - Made session and CSRF cookies always secure when debug is disabled, with a

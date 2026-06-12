@@ -19,6 +19,7 @@ ENV_BOOL_PLAN="$ROOT_DIR/docs/plans/2026-06-09-django-env-bool-normalization.md"
 MALFORMED_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-malformed-token-fallback.md"
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SECURE_COOKIE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-production-secure-cookies.md"
+TWITTER_API_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-api-error-boundary.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -56,6 +57,7 @@ for path in \
   "docs/plans/2026-06-09-django-env-bool-normalization.md" \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-10-production-secure-cookies.md" \
+  "docs/plans/2026-06-12-twitter-api-error-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
@@ -277,6 +279,13 @@ if ! grep -Fq "Fail clearly when Twitter access tokens are absent" "$ROOT_DIR/VI
   exit 1
 fi
 
+if ! grep -Fq "Contain expected Twitter API failures" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "docs/plans/2026-06-12-twitter-api-error-boundary.md" "$README" ||
+  ! grep -Fq "Expected Twitter API errors" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "Project docs must preserve the Twitter API failure boundary." >&2
+  exit 1
+fi
+
 if ! grep -Fq "Normalize boolean environment flags" "$ROOT_DIR/VISION.md"; then
   printf '%s\n' "VISION.md must keep boolean environment flag normalization visible." >&2
   exit 1
@@ -375,6 +384,12 @@ if ! grep -Fq "status: completed" "$SECURE_COOKIE_PLAN" ||
   exit 1
 fi
 
+if ! grep -Fq "status: completed" "$TWITTER_API_ERROR_PLAN" ||
+  ! grep -Fq "Mutations removing either" "$TWITTER_API_ERROR_PLAN"; then
+  printf '%s\n' "Twitter API error-boundary plan must record completed mutation verification." >&2
+  exit 1
+fi
+
 if ! grep -Fq "ImproperlyConfigured" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
   printf '%s\n' "Settings helper tests must cover the production secret-key failure." >&2
   exit 1
@@ -393,6 +408,20 @@ fi
 
 if ! grep -Fq "test_normalize_status_ignores_overlong_text" "$VIEW_TESTS"; then
   printf '%s\n' "View helper tests must cover overlong status submissions." >&2
+  exit 1
+fi
+
+if ! grep -Fq "def load_twitter_home" "$VIEWS" ||
+  [ "$(grep -Fc 'except twitter.TwitterError' "$VIEWS")" -lt 2 ] ||
+  ! grep -Fq "test_load_twitter_home_preserves_timeline_when_post_fails" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_returns_stable_error_when_timeline_fails" "$VIEW_TESTS" ||
+  ! grep -Fq "twitter_error" "$HOME_TEMPLATE"; then
+  printf '%s\n' "Twitter API failures must render stable view errors with helper coverage." >&2
+  exit 1
+fi
+
+if grep -Fq "provider detail" "$VIEWS"; then
+  printf '%s\n' "Twitter API view errors must not expose provider exception details." >&2
   exit 1
 fi
 
