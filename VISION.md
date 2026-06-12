@@ -31,6 +31,7 @@ Priority:
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep production session and CSRF cookies transport-secure
 - Keep GitHub Actions aligned with the local Python `make check` baseline
+- Keep a credential-free checkout in the read-only GitHub Actions workflow
 - Keep time-drift troubleshooting visible for OAuth failures
 
 Next priorities:

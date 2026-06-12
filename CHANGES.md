@@ -2,6 +2,8 @@
 
 ## 2026-06-12
 
+- Stopped GitHub Actions checkout credential persistence and added an exact
+  workflow contract for the single pinned checkout step.
 - Contained expected python-twitter posting and timeline failures so the home
   page renders stable generic messages instead of returning an internal error.
 - Preserved available timeline results when a status post fails and added

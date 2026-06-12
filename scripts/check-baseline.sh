@@ -21,6 +21,7 @@ CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SECURE_COOKIE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-production-secure-cookies.md"
 TWITTER_API_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-api-error-boundary.md"
 POST_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-post-redirect-get.md"
+CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-boundary.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -60,6 +61,7 @@ for path in \
   "docs/plans/2026-06-10-production-secure-cookies.md" \
   "docs/plans/2026-06-12-twitter-api-error-boundary.md" \
   "docs/plans/2026-06-12-twitter-post-redirect-get.md" \
+  "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
@@ -77,6 +79,23 @@ fi
 
 if ! grep -Fq "permissions:" "$CI_WORKFLOW" || ! grep -Fq "contents: read" "$CI_WORKFLOW"; then
   printf '%s\n' "GitHub Actions workflow must keep repository access read-only." >&2
+  exit 1
+fi
+
+if [ "$(grep -Fc "uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW")" -ne 1 ] ||
+  [ "$(grep -Fc "persist-credentials: false" "$CI_WORKFLOW")" -ne 1 ]; then
+  printf '%s\n' "GitHub Actions must use one pinned checkout without persisting credentials." >&2
+  exit 1
+fi
+
+if ! awk '
+  /uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10/ { checkout = 1; next }
+  checkout && /^[[:space:]]+with:[[:space:]]*$/ { options = 1; next }
+  checkout && options && /^[[:space:]]+persist-credentials: false[[:space:]]*$/ { protected = 1; next }
+  checkout && /^[[:space:]]+- / { exit }
+  END { exit protected ? 0 : 1 }
+' "$CI_WORKFLOW"; then
+  printf '%s\n' "Checkout credential persistence must be disabled on the pinned checkout step." >&2
   exit 1
 fi
 
@@ -435,6 +454,22 @@ fi
 if ! grep -Fq "status: completed" "$POST_REDIRECT_PLAN" ||
   ! grep -Fq "make check" "$POST_REDIRECT_PLAN"; then
   printf '%s\n' "Twitter POST/Redirect/GET plan must remain completed and verified." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq 'local `make check` passed' "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "external working directory" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$CHECKOUT_CREDENTIAL_PLAN"; then
+  printf '%s\n' "Checkout credential boundary plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "does not persist checkout credentials" "$README" ||
+  ! grep -Fq "does not persist checkout credentials" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "credential-free checkout" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "Stopped GitHub Actions checkout credential persistence" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the checkout credential boundary." >&2
   exit 1
 fi
 

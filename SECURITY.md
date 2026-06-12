@@ -43,7 +43,8 @@ debug mode may opt in when it is served over HTTPS.
 GitHub Actions runs isolated `make check` coverage on Python 3.10, 3.12, and
 3.14 with commit-pinned actions, read-only repository access, and bounded
 execution. CI deliberately does not install the unsupported Django 1.6-era
-dependency set.
+dependency set and does not persist checkout credentials after source
+retrieval.
 
 ## Dependency and Supply Chain Security
 

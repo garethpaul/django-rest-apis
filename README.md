@@ -97,7 +97,8 @@ CSRF-protected POST-only form instead of a GET link.
 GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 for pushes,
 pull requests, and manual dispatches on Ubuntu 24.04. The workflow uses commit-pinned actions,
 read-only repository access, and a bounded runtime without installing the
-unsupported Django 1.6 dependency set.
+unsupported Django 1.6 dependency set. It does not persist checkout credentials
+after source retrieval.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
