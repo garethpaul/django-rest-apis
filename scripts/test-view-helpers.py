@@ -129,10 +129,11 @@ class ViewHelperTests(unittest.TestCase):
                 return ["existing status"]
 
         api = FakeApi()
-        statuses, error = views.load_twitter_home(api, "sample-user", "hello")
+        statuses, error, posted = views.load_twitter_home(api, "sample-user", "hello")
 
         self.assertEqual(statuses, ["existing status"])
         self.assertEqual(error, "Twitter could not post the status right now.")
+        self.assertFalse(posted)
         self.assertEqual(api.status, "hello")
         self.assertEqual(api.screen_name, "sample-user")
         self.assertEqual(api.count, 10)
@@ -142,11 +143,76 @@ class ViewHelperTests(unittest.TestCase):
             def GetUserTimeline(self, screen_name, count):
                 raise views.twitter.TwitterError("provider detail")
 
-        statuses, error = views.load_twitter_home(FakeApi(), "sample-user", None)
+        statuses, error, posted = views.load_twitter_home(FakeApi(), "sample-user", None)
 
         self.assertEqual(statuses, [])
         self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
         self.assertNotIn("provider detail", error)
+
+    def test_load_twitter_home_skips_timeline_after_successful_post(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                self.status = status
+
+            def GetUserTimeline(self, screen_name, count):
+                raise AssertionError("timeline must not load after a successful post")
+
+        api = FakeApi()
+        statuses, error, posted = views.load_twitter_home(api, "sample-user", "hello")
+
+        self.assertEqual(statuses, [])
+        self.assertIsNone(error)
+        self.assertTrue(posted)
+        self.assertEqual(api.status, "hello")
+
+    def test_home_redirects_after_successful_status_post(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                self.status = status
+
+            def GetUserTimeline(self, screen_name, count):
+                raise AssertionError("timeline must not load after a successful post")
+
+        api = FakeApi()
+        original_get_twitter = views.get_twitter
+        views.get_twitter = lambda user: api
+        try:
+            request = types.SimpleNamespace(
+                POST={"status": "  hello  "},
+                user=types.SimpleNamespace(username="sample-user"),
+            )
+
+            self.assertEqual(views.home(request), "/home")
+            self.assertEqual(api.status, "hello")
+        finally:
+            views.get_twitter = original_get_twitter
+
+    def test_home_renders_timeline_when_status_post_fails(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise views.twitter.TwitterError("provider detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                return ["existing status"]
+
+        original_get_twitter = views.get_twitter
+        views.get_twitter = lambda user: FakeApi()
+        try:
+            request = types.SimpleNamespace(
+                POST={"status": "hello"},
+                user=types.SimpleNamespace(username="sample-user"),
+            )
+
+            args, _kwargs = views.home(request)
+            self.assertEqual(args[0], "home.html")
+            self.assertEqual(args[1]["statuses"], ["existing status"])
+            self.assertEqual(
+                args[1]["twitter_error"],
+                "Twitter could not post the status right now.",
+            )
+        finally:
+            views.get_twitter = original_get_twitter
 
     def test_get_twitter_uses_environment_tokens_when_social_token_is_missing(self):
         captured = {}

@@ -21,6 +21,8 @@ Priority:
 - Avoid committing Twitter keys, access tokens, or local settings secrets
 - Preserve the documented legacy setup for Django, south, Fabric, and python-twitter
 - Keep account-changing actions behind POST and CSRF protection
+- Redirect after successful status posts so browser refreshes cannot resubmit
+  account-changing requests
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable

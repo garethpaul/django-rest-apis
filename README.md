@@ -86,7 +86,9 @@ OAuth token fallback, and pinned legacy dependency ranges. It also verifies
 that missing Twitter access tokens fail clearly before constructing the API
 client. Expected Twitter posting and timeline errors are contained at the view
 boundary, with generic messages that do not expose provider details and with
-available timeline data preserved after posting failures. `DJANGO_DEBUG`
+available timeline data preserved after posting failures. Successful status
+posts redirect to `/home` before timeline loading so browser refreshes do not
+resubmit the mutation. `DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies
 always use the secure flag; debug-mode HTTPS testing can opt in with
@@ -139,6 +141,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   baseline.
 - See `docs/plans/2026-06-12-twitter-api-error-boundary.md` for stable posting
   and timeline failure handling.
+- See `docs/plans/2026-06-12-twitter-post-redirect-get.md` for duplicate status
+  submission prevention.
 - See `docs/plans/2026-06-10-production-secure-cookies.md` for production
   session and CSRF cookie transport protection.
 
