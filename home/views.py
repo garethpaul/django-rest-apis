@@ -40,6 +40,7 @@ def load_twitter_home(api, username, status):
     if status:
         try:
             api.PostUpdates(status)
+            return [], None, True
         except twitter.TwitterError:
             error = 'Twitter could not post the status right now.'
 
@@ -50,7 +51,7 @@ def load_twitter_home(api, username, status):
         if error is None:
             error = 'Twitter could not load the timeline right now.'
 
-    return statuses, error
+    return statuses, error, False
 
 
 def login(request):
@@ -62,7 +63,9 @@ def home(request):
     status = normalize_status(request.POST.get("status", None))
 
     api = get_twitter(request.user)
-    statuses, twitter_error = load_twitter_home(api, request.user.username, status)
+    statuses, twitter_error, posted = load_twitter_home(api, request.user.username, status)
+    if posted:
+        return HttpResponseRedirect('/home')
 
     context = {
         "request": request,

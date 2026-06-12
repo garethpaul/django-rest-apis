@@ -20,6 +20,7 @@ MALFORMED_TOKEN_PLAN="$ROOT_DIR/docs/plans/2026-06-09-twitter-malformed-token-fa
 CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SECURE_COOKIE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-production-secure-cookies.md"
 TWITTER_API_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-api-error-boundary.md"
+POST_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-post-redirect-get.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -58,6 +59,7 @@ for path in \
   "docs/plans/2026-06-10-ci-baseline.md" \
   "docs/plans/2026-06-10-production-secure-cookies.md" \
   "docs/plans/2026-06-12-twitter-api-error-boundary.md" \
+  "docs/plans/2026-06-12-twitter-post-redirect-get.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
@@ -417,6 +419,22 @@ if ! grep -Fq "def load_twitter_home" "$VIEWS" ||
   ! grep -Fq "test_load_twitter_home_returns_stable_error_when_timeline_fails" "$VIEW_TESTS" ||
   ! grep -Fq "twitter_error" "$HOME_TEMPLATE"; then
   printf '%s\n' "Twitter API failures must render stable view errors with helper coverage." >&2
+  exit 1
+fi
+
+if ! grep -Fq "return [], None, True" "$VIEWS" ||
+  ! grep -Fq "if posted:" "$VIEWS" ||
+  ! grep -Fq "return HttpResponseRedirect('/home')" "$VIEWS" ||
+  ! grep -Fq "test_load_twitter_home_skips_timeline_after_successful_post" "$VIEW_TESTS" ||
+  ! grep -Fq "test_home_redirects_after_successful_status_post" "$VIEW_TESTS" ||
+  ! grep -Fq "test_home_renders_timeline_when_status_post_fails" "$VIEW_TESTS"; then
+  printf '%s\n' "Successful Twitter posts must use the tested POST/Redirect/GET path." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$POST_REDIRECT_PLAN" ||
+  ! grep -Fq "make check" "$POST_REDIRECT_PLAN"; then
+  printf '%s\n' "Twitter POST/Redirect/GET plan must remain completed and verified." >&2
   exit 1
 fi
 

@@ -6,6 +6,9 @@
   page renders stable generic messages instead of returning an internal error.
 - Preserved available timeline results when a status post fails and added
   isolated helper regressions for both provider failure paths.
+- Redirected successful status posts before timeline loading so browser
+  refreshes cannot publish duplicates.
+- Added isolated helper and home-view tests for the POST/Redirect/GET path.
 
 ## 2026-06-10
 
