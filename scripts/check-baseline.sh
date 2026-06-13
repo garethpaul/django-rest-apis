@@ -24,6 +24,7 @@ TWITTER_API_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-api-error-bounda
 POST_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-post-redirect-get.md"
 STATUS_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-status-type-guard.md"
 CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-boundary.md"
+EXTRA_DATA_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-extra-data-type-guard.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -64,6 +65,7 @@ for path in \
   "docs/plans/2026-06-12-twitter-api-error-boundary.md" \
   "docs/plans/2026-06-12-twitter-post-redirect-get.md" \
   "docs/plans/2026-06-13-twitter-status-type-guard.md" \
+  "docs/plans/2026-06-13-twitter-extra-data-type-guard.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -521,6 +523,29 @@ fi
 
 if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_malformed" "$VIEW_TESTS"; then
   printf '%s\n' "View helper tests must cover malformed social OAuth token fallback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "access_token = extra_data.get('access_token') if isinstance(extra_data, dict) else None" "$VIEWS" ||
+  ! grep -Fq "test_get_twitter_uses_environment_tokens_when_extra_data_is_string" "$VIEW_TESTS" ||
+  ! grep -Fq "test_get_twitter_uses_environment_tokens_when_extra_data_is_list" "$VIEW_TESTS" ||
+  ! grep -Fq "assert_environment_tokens_for_extra_data" "$VIEW_TESTS"; then
+  printf '%s\n' "Malformed social-auth metadata must preserve environment-token fallback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "non-mapping social-auth metadata" "$README" ||
+  ! grep -Fq "non-mapping saved social-auth metadata" "$VISION" ||
+  ! grep -Fq "Ignored non-mapping social-auth metadata" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document malformed social-auth metadata fallback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$EXTRA_DATA_TYPE_PLAN" ||
+  ! grep -Fq "make check" "$EXTRA_DATA_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$EXTRA_DATA_TYPE_PLAN" ||
+  ! grep -Fq "no live Twitter" "$EXTRA_DATA_TYPE_PLAN"; then
+  printf '%s\n' "Social extra-data type-guard plan must record completed verification." >&2
   exit 1
 fi
 

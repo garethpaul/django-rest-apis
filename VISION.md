@@ -27,6 +27,7 @@ Priority:
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable
+- Ignore non-mapping saved social-auth metadata so environment fallbacks remain usable
 - Fail clearly when Twitter access tokens are absent
 - Contain expected Twitter API failures without exposing provider details
 - Normalize boolean environment flags before evaluating debug-mode settings

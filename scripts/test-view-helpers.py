@@ -373,6 +373,41 @@ class ViewHelperTests(unittest.TestCase):
             views.UserSocialAuth = original_user_social_auth
             views.twitter.Api = original_api
 
+    def assert_environment_tokens_for_extra_data(self, extra_data):
+        captured = {}
+
+        class FakeManager:
+            def get(self, user, provider):
+                self.user = user
+                self.provider = provider
+                return types.SimpleNamespace(extra_data=extra_data)
+
+        def fake_api(**kwargs):
+            captured.update(kwargs)
+            return captured
+
+        original_user_social_auth = views.UserSocialAuth
+        original_api = views.twitter.Api
+
+        try:
+            views.UserSocialAuth = types.SimpleNamespace(objects=FakeManager())
+            views.twitter.Api = fake_api
+
+            api = views.get_twitter(types.SimpleNamespace(username="sample-user"))
+
+            self.assertIs(api, captured)
+            self.assertEqual(captured["access_token_key"], "access-token")
+            self.assertEqual(captured["access_token_secret"], "access-token-secret")
+        finally:
+            views.UserSocialAuth = original_user_social_auth
+            views.twitter.Api = original_api
+
+    def test_get_twitter_uses_environment_tokens_when_extra_data_is_string(self):
+        self.assert_environment_tokens_for_extra_data("malformed")
+
+    def test_get_twitter_uses_environment_tokens_when_extra_data_is_list(self):
+        self.assert_environment_tokens_for_extra_data(["malformed"])
+
     def test_get_twitter_raises_configuration_error_when_access_tokens_are_missing(self):
         class FakeUserSocialAuth:
             class DoesNotExist(Exception):

@@ -83,7 +83,8 @@ helper tests, checks POST-only status submission, Twitter status normalization,
 rejection of non-string status values before provider writes,
 safe Twitter status links, missing social OAuth token fallback, missing
 social-auth row fallback, blank social OAuth token fallback, malformed social
-OAuth token fallback, and pinned legacy dependency ranges. It also verifies
+OAuth token fallback, non-mapping social-auth metadata fallback, and pinned
+legacy dependency ranges. It also verifies
 that missing Twitter access tokens fail clearly before constructing the API
 client. Expected Twitter posting and timeline errors are contained at the view
 boundary, with generic messages that do not expose provider details and with

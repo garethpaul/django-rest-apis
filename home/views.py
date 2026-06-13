@@ -99,7 +99,7 @@ def get_twitter(user):
 
     if usa:
         extra_data = getattr(usa, 'extra_data', {}) or {}
-        access_token = extra_data.get('access_token')
+        access_token = extra_data.get('access_token') if isinstance(extra_data, dict) else None
         if isinstance(access_token, dict):
             access_token_key = normalize_token(access_token.get('oauth_token')) or access_token_key
             access_token_secret = normalize_token(access_token.get('oauth_token_secret')) or access_token_secret

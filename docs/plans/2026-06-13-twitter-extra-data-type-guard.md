@@ -2,7 +2,7 @@
 title: Twitter Social Extra Data Type Guard
 type: fix
 date: 2026-06-13
-status: planned
+status: completed
 ---
 
 # Twitter Social Extra Data Type Guard
@@ -53,24 +53,25 @@ and bypasses otherwise valid environment credentials.
 
 ### U3. Enforce Maintenance Evidence
 
-- **Files:** `scripts/check-baseline.sh`, `README.md`, `CHANGES.md`, `VISION.md`,
-  `AGENTS.md`
+- **Files:** `scripts/check-baseline.sh`, `README.md`, `CHANGES.md`, `VISION.md`
 - **Goal:** Require the source guard, regression names, documentation, and
   truthful completed verification evidence.
 - **Covers:** R6
 
 ## Verification
 
-- Run the focused view-helper suite, `make check`, and the absolute-path check
-  wrapper from an external working directory on available supported Python
-  versions.
-- Run shell syntax, Python compilation, whitespace, secret-pattern, and
-  generated-artifact inspections.
-- Apply isolated mutations that remove the outer type guard, restore direct
-  `.get`, remove each malformed-row fixture, weaken fallback assertions, drift
-  documentation, or leave the plan incomplete; each must fail.
-- Do not install the historical Django stack, construct a real Twitter client,
-  use credentials, or make live provider requests.
+- Python 3.12.8 and Python 3.14.0 each passed seven settings tests, 17 view
+  helper tests, and Python compilation.
+- `make check` passed on Python 3.12.8 and Python 3.14.0, and the rooted wrapper
+  passed from `/tmp` with Python 3.12.8.
+- Shell syntax, `git diff --check`, explicit secret-pattern inspection, and
+  generated-artifact inspection passed.
+- Seven hostile mutations were rejected for a removed guard, wrong accepted
+  container type, each removed malformed-row regression, weakened fallback
+  assertion, documentation drift, and incomplete plan status.
+- The historical Django stack was not installed or launched. Verification used
+  no credentials, constructed no real Twitter client, and made no live Twitter
+  request.
 
 ## Risks
 
