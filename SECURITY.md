@@ -38,6 +38,8 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this Django sample, missing Twitter access tokens should fail with an explicit Django configuration error before an API client is constructed.
 Expected Twitter API errors should render stable generic messages and must not
 expose raw provider exception details to authenticated users.
+Malformed successful Twitter timeline results must use the same generic empty
+state instead of passing incompatible provider data into template rendering.
 Production settings must always mark session and CSRF cookies secure; local
 debug mode may opt in when it is served over HTTPS.
 GitHub Actions runs isolated `make check` coverage on Python 3.10, 3.12, and

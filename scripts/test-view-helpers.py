@@ -154,6 +154,57 @@ class ViewHelperTests(unittest.TestCase):
         self.assertFalse(posted)
         self.assertNotIn("provider detail", error)
 
+    def test_load_twitter_home_accepts_tuple_timeline(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return ("first status", "second status")
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample-user", None
+        )
+
+        self.assertEqual(statuses, ("first status", "second status"))
+        self.assertIsNone(error)
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_rejects_malformed_timeline_results(self):
+        malformed_results = (None, {}, "single status", 123, object())
+
+        class FakeApi:
+            def __init__(self, result):
+                self.result = result
+
+            def GetUserTimeline(self, screen_name, count):
+                return self.result
+
+        for malformed_result in malformed_results:
+            with self.subTest(result=repr(malformed_result)):
+                statuses, error, posted = views.load_twitter_home(
+                    FakeApi(malformed_result), "sample-user", None
+                )
+
+                self.assertEqual(statuses, [])
+                self.assertEqual(
+                    error, "Twitter could not load the timeline right now."
+                )
+                self.assertFalse(posted)
+
+    def test_load_twitter_home_preserves_post_error_for_malformed_timeline(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise views.twitter.TwitterError("post provider detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                return None
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample-user", "hello"
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not post the status right now.")
+        self.assertFalse(posted)
+
     def test_load_twitter_home_skips_timeline_after_successful_post(self):
         class FakeApi:
             def PostUpdates(self, status):

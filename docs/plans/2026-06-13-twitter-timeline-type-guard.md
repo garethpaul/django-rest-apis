@@ -1,6 +1,6 @@
 # Guard Malformed Twitter Timeline Results
 
-status: planned
+status: completed
 
 ## Context
 
@@ -44,3 +44,28 @@ though the view expects an ordered collection of status objects.
 - Verify isolated mutations for accepted types, malformed fallback, error
   precedence, regression tests, documentation, and completed plan evidence.
 - Audit intended paths for generated artifacts and credential-like additions.
+
+## Work Completed
+
+- Accepted only list and tuple results from the successful timeline provider
+  boundary before template rendering.
+- Converted malformed successful results to the existing generic empty-state
+  timeline failure without replacing an earlier status-post error.
+- Added dependency-free regressions for tuples, five malformed result shapes,
+  and failed-post error precedence.
+- Added mutation-sensitive source, test, documentation, and plan contracts to
+  the canonical baseline.
+
+## Verification Completed
+
+- Python 3.12.8 and Python 3.14.0 `make check` passed seven settings tests,
+  twenty view-helper tests, source contracts, and bytecode compilation.
+- An external-working-directory `make check` passed with Python 3.12.8.
+- `sh -n scripts/check-baseline.sh`, direct Python bytecode compilation, and
+  `git diff --check` passed.
+- Eight isolated hostile mutations were rejected across accepted types,
+  malformed fallback, error precedence, regression tests, documentation, and
+  completed plan evidence.
+- Intended-path generated-artifact and credential-like addition scans passed.
+- The historical Django stack was not installed or launched; no credentials or
+  real Twitter client were used, and no live Twitter service request was made.

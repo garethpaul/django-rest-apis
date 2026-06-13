@@ -25,6 +25,7 @@ POST_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-post-redirect-get.md
 STATUS_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-status-type-guard.md"
 CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-boundary.md"
 EXTRA_DATA_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-extra-data-type-guard.md"
+TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -66,6 +67,7 @@ for path in \
   "docs/plans/2026-06-12-twitter-post-redirect-get.md" \
   "docs/plans/2026-06-13-twitter-status-type-guard.md" \
   "docs/plans/2026-06-13-twitter-extra-data-type-guard.md" \
+  "docs/plans/2026-06-13-twitter-timeline-type-guard.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -73,6 +75,12 @@ for path in \
   "scripts/check-baseline.sh"; do
   require_file "$path"
 done
+
+LOAD_TWITTER_HOME=$(awk '
+  /^def load_twitter_home\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def load_twitter_home\(/ { exit }
+  capture { print }
+' "$VIEWS")
 
 if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW" ||
   ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$CI_WORKFLOW" ||
@@ -469,6 +477,19 @@ if ! grep -Fq "def load_twitter_home" "$VIEWS" ||
   exit 1
 fi
 
+if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc "if not isinstance(statuses, (list, tuple)):")" -ne 1 ] ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
+    /statuses = api.GetUserTimeline\(/ { request = NR }
+    /if not isinstance\(statuses, \(list, tuple\)\):/ { guard = NR }
+    END { exit request && guard > request ? 0 : 1 }
+  ' ||
+  ! grep -Fq "test_load_twitter_home_accepts_tuple_timeline" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_results" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_timeline" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline results must retain the tested list-or-tuple type boundary." >&2
+  exit 1
+fi
+
 if ! grep -Fq "return [], None, True" "$VIEWS" ||
   ! grep -Fq "if posted:" "$VIEWS" ||
   ! grep -Fq "return HttpResponseRedirect('/home')" "$VIEWS" ||
@@ -546,6 +567,22 @@ if ! grep -Fq "status: completed" "$EXTRA_DATA_TYPE_PLAN" ||
   ! grep -Fq "hostile mutations were rejected" "$EXTRA_DATA_TYPE_PLAN" ||
   ! grep -Fq "no live Twitter" "$EXTRA_DATA_TYPE_PLAN"; then
   printf '%s\n' "Social extra-data type-guard plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "malformed timeline results become an empty timeline" "$README" ||
+  ! grep -Fq "Malformed successful Twitter timeline results" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject malformed Twitter timeline result types" "$VISION" ||
+  ! grep -Fq "Contained malformed Twitter timeline results" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document malformed Twitter timeline containment." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$TIMELINE_TYPE_PLAN" ||
+  ! grep -Fq "make check" "$TIMELINE_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$TIMELINE_TYPE_PLAN" ||
+  ! grep -Fq "no live Twitter" "$TIMELINE_TYPE_PLAN"; then
+  printf '%s\n' "Twitter timeline type-guard plan must record completed verification." >&2
   exit 1
 fi
 

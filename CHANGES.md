@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Contained malformed Twitter timeline results behind an empty-state type
+  boundary while preserving valid lists, tuples, and existing post errors.
 - Ignored non-mapping social-auth metadata so valid environment Twitter tokens
   remain usable when a legacy row has an incompatible outer value.
 - Rejected non-string Twitter status values before normalization or provider

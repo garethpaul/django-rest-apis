@@ -51,6 +51,11 @@ def load_twitter_home(api, username, status):
         if error is None:
             error = 'Twitter could not load the timeline right now.'
 
+    if not isinstance(statuses, (list, tuple)):
+        statuses = []
+        if error is None:
+            error = 'Twitter could not load the timeline right now.'
+
     return statuses, error, False
 
 
