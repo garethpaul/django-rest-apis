@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Contained malformed Twitter timeline items before template field access,
+  rejecting incomplete provider collections with the existing generic error.
 - Contained malformed Twitter timeline results behind an empty-state type
   boundary while preserving valid lists, tuples, and existing post errors.
 - Ignored non-mapping social-auth metadata so valid environment Twitter tokens

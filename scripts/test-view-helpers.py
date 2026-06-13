@@ -105,6 +105,14 @@ def load_views_module():
 views = load_views_module()
 
 
+def make_status(status_id=42, text="existing status", screen_name="sample-user"):
+    return types.SimpleNamespace(
+        id=status_id,
+        text=text,
+        user=types.SimpleNamespace(screen_name=screen_name),
+    )
+
+
 class ViewHelperTests(unittest.TestCase):
     def test_normalize_status_strips_text(self):
         self.assertEqual(views.normalize_status("  hello twitter  "), "hello twitter")
@@ -130,12 +138,12 @@ class ViewHelperTests(unittest.TestCase):
             def GetUserTimeline(self, screen_name, count):
                 self.screen_name = screen_name
                 self.count = count
-                return ["existing status"]
+                return [make_status()]
 
         api = FakeApi()
         statuses, error, posted = views.load_twitter_home(api, "sample-user", "hello")
 
-        self.assertEqual(statuses, ["existing status"])
+        self.assertEqual(statuses, [make_status()])
         self.assertEqual(error, "Twitter could not post the status right now.")
         self.assertFalse(posted)
         self.assertEqual(api.status, "hello")
@@ -155,17 +163,61 @@ class ViewHelperTests(unittest.TestCase):
         self.assertNotIn("provider detail", error)
 
     def test_load_twitter_home_accepts_tuple_timeline(self):
+        first_status = make_status(1, "first status")
+        second_status = make_status(2, "second status")
+
         class FakeApi:
             def GetUserTimeline(self, screen_name, count):
-                return ("first status", "second status")
+                return (first_status, second_status)
 
         statuses, error, posted = views.load_twitter_home(
             FakeApi(), "sample-user", None
         )
 
-        self.assertEqual(statuses, ("first status", "second status"))
+        self.assertEqual(statuses, (first_status, second_status))
         self.assertIsNone(error)
         self.assertFalse(posted)
+
+    def test_timeline_status_requires_template_fields(self):
+        self.assertTrue(views.timeline_status_is_renderable(make_status()))
+        self.assertFalse(views.timeline_status_is_renderable(None))
+        self.assertFalse(views.timeline_status_is_renderable(make_status(status_id=0)))
+        self.assertFalse(views.timeline_status_is_renderable(make_status(status_id=True)))
+        self.assertFalse(views.timeline_status_is_renderable(make_status(text=None)))
+        self.assertFalse(views.timeline_status_is_renderable(make_status(screen_name="  ")))
+        self.assertFalse(
+            views.timeline_status_is_renderable(
+                types.SimpleNamespace(id=42, text="missing user")
+            )
+        )
+
+    def test_load_twitter_home_rejects_malformed_timeline_items(self):
+        malformed_items = (
+            None,
+            make_status(status_id=-1),
+            make_status(text=["not", "text"]),
+            make_status(screen_name=None),
+            types.SimpleNamespace(id=42, text="missing user"),
+        )
+
+        class FakeApi:
+            def __init__(self, item):
+                self.item = item
+
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(), self.item]
+
+        for malformed_item in malformed_items:
+            with self.subTest(item=repr(malformed_item)):
+                statuses, error, posted = views.load_twitter_home(
+                    FakeApi(malformed_item), "sample-user", None
+                )
+
+                self.assertEqual(statuses, [])
+                self.assertEqual(
+                    error, "Twitter could not load the timeline right now."
+                )
+                self.assertFalse(posted)
 
     def test_load_twitter_home_rejects_malformed_timeline_results(self):
         malformed_results = (None, {}, "single status", 123, object())
@@ -196,6 +248,22 @@ class ViewHelperTests(unittest.TestCase):
 
             def GetUserTimeline(self, screen_name, count):
                 return None
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample-user", "hello"
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not post the status right now.")
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_preserves_post_error_for_malformed_item(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise views.twitter.TwitterError("post provider detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(), None]
 
         statuses, error, posted = views.load_twitter_home(
             FakeApi(), "sample-user", "hello"
@@ -249,7 +317,7 @@ class ViewHelperTests(unittest.TestCase):
                 raise views.twitter.TwitterError("provider detail")
 
             def GetUserTimeline(self, screen_name, count):
-                return ["existing status"]
+                return [make_status()]
 
         original_get_twitter = views.get_twitter
         views.get_twitter = lambda user: FakeApi()
@@ -261,7 +329,7 @@ class ViewHelperTests(unittest.TestCase):
 
             args, _kwargs = views.home(request)
             self.assertEqual(args[0], "home.html")
-            self.assertEqual(args[1]["statuses"], ["existing status"])
+            self.assertEqual(args[1]["statuses"], [make_status()])
             self.assertEqual(
                 args[1]["twitter_error"],
                 "Twitter could not post the status right now.",
@@ -275,7 +343,7 @@ class ViewHelperTests(unittest.TestCase):
                 raise AssertionError("malformed status must not reach Twitter")
 
             def GetUserTimeline(self, screen_name, count):
-                return ["existing status"]
+                return [make_status()]
 
         original_get_twitter = views.get_twitter
         views.get_twitter = lambda user: FakeApi()
@@ -286,7 +354,7 @@ class ViewHelperTests(unittest.TestCase):
             )
 
             args, _kwargs = views.home(request)
-            self.assertEqual(args[1]["statuses"], ["existing status"])
+            self.assertEqual(args[1]["statuses"], [make_status()])
             self.assertIsNone(args[1]["twitter_error"])
         finally:
             views.get_twitter = original_get_twitter

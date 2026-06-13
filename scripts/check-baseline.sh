@@ -26,6 +26,7 @@ STATUS_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-status-type-guard.md"
 CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-boundary.md"
 EXTRA_DATA_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-extra-data-type-guard.md"
 TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.md"
+TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -68,6 +69,7 @@ for path in \
   "docs/plans/2026-06-13-twitter-status-type-guard.md" \
   "docs/plans/2026-06-13-twitter-extra-data-type-guard.md" \
   "docs/plans/2026-06-13-twitter-timeline-type-guard.md" \
+  "docs/plans/2026-06-13-twitter-timeline-item-guard.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -79,6 +81,11 @@ done
 LOAD_TWITTER_HOME=$(awk '
   /^def load_twitter_home\(/ { capture = 1 }
   capture && /^def / && $0 !~ /^def load_twitter_home\(/ { exit }
+  capture { print }
+' "$VIEWS")
+TIMELINE_STATUS_RENDERABLE=$(awk '
+  /^def timeline_status_is_renderable\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def timeline_status_is_renderable\(/ { exit }
   capture { print }
 ' "$VIEWS")
 
@@ -490,6 +497,24 @@ if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc "if not isinstance(statuse
   exit 1
 fi
 
+if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_id, INTEGER_TYPES)" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "not isinstance(status_id, bool)" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(text, STRING_TYPES)" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(screen_name, STRING_TYPES)" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "bool(screen_name.strip())" ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fq "elif not all(timeline_status_is_renderable(item) for item in statuses):" ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
+    /if not isinstance\(statuses, \(list, tuple\)\):/ { type_guard = NR }
+    /elif not all\(timeline_status_is_renderable\(item\) for item in statuses\):/ { item_guard = NR }
+    END { exit type_guard && item_guard > type_guard ? 0 : 1 }
+  ' ||
+  ! grep -Fq "test_timeline_status_requires_template_fields" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_items" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_item" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline items must retain the tested template-field boundary." >&2
+  exit 1
+fi
+
 if ! grep -Fq "return [], None, True" "$VIEWS" ||
   ! grep -Fq "if posted:" "$VIEWS" ||
   ! grep -Fq "return HttpResponseRedirect('/home')" "$VIEWS" ||
@@ -583,6 +608,24 @@ if ! grep -Fq "status: completed" "$TIMELINE_TYPE_PLAN" ||
   ! grep -Fq "hostile mutations were rejected" "$TIMELINE_TYPE_PLAN" ||
   ! grep -Fq "no live Twitter" "$TIMELINE_TYPE_PLAN"; then
   printf '%s\n' "Twitter timeline type-guard plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "malformed timeline items" "$README" ||
+  ! grep -Fq "reject the complete timeline" "$README" ||
+  ! grep -Fq "Malformed successful Twitter timeline items" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject malformed Twitter timeline items" "$VISION" ||
+  ! grep -Fq "Contained malformed Twitter timeline items" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document malformed Twitter timeline item containment." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "make check" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "no live" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "Twitter request" "$TIMELINE_ITEM_PLAN"; then
+  printf '%s\n' "Twitter timeline item-guard plan must record completed verification." >&2
   exit 1
 fi
 

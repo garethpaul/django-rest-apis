@@ -12,6 +12,10 @@ try:
     STRING_TYPES = (basestring,)
 except NameError:
     STRING_TYPES = (str,)
+try:
+    INTEGER_TYPES = (int, long)
+except NameError:
+    INTEGER_TYPES = (int,)
 
 
 def normalize_status(status):
@@ -35,6 +39,21 @@ def normalize_token(value):
     return value or None
 
 
+def timeline_status_is_renderable(status):
+    status_id = getattr(status, 'id', None)
+    text = getattr(status, 'text', None)
+    user = getattr(status, 'user', None)
+    screen_name = getattr(user, 'screen_name', None)
+    return (
+        isinstance(status_id, INTEGER_TYPES) and
+        not isinstance(status_id, bool) and
+        status_id > 0 and
+        isinstance(text, STRING_TYPES) and
+        isinstance(screen_name, STRING_TYPES) and
+        bool(screen_name.strip())
+    )
+
+
 def load_twitter_home(api, username, status):
     error = None
     if status:
@@ -52,6 +71,10 @@ def load_twitter_home(api, username, status):
             error = 'Twitter could not load the timeline right now.'
 
     if not isinstance(statuses, (list, tuple)):
+        statuses = []
+        if error is None:
+            error = 'Twitter could not load the timeline right now.'
+    elif not all(timeline_status_is_renderable(item) for item in statuses):
         statuses = []
         if error is None:
             error = 'Twitter could not load the timeline right now.'

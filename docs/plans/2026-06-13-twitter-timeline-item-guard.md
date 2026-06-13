@@ -1,6 +1,6 @@
 # Guard Malformed Twitter Timeline Items
 
-status: in progress
+status: completed
 
 ## Context
 
@@ -59,3 +59,29 @@ provider failure.
 - Live Twitter responses and Django template rendering remain unavailable on
   this host, so dependency-free tests prove the boundary rather than provider
   compatibility.
+
+## Work Completed
+
+- Added a provider-boundary predicate for the exact status fields dereferenced
+  by the existing template.
+- Rejected complete timelines containing missing, non-integer, boolean, or
+  non-positive IDs; non-string text; missing users; or blank screen names.
+- Preserved valid list and tuple timelines, successful-post redirects, and the
+  earlier post error when malformed timeline data follows a failed post.
+- Added dependency-free regressions, function-scoped static contracts, project
+  guidance, and completed-plan enforcement.
+
+## Verification Completed
+
+- Python 3.12.8 and Python 3.14.0 `make check` each passed seven settings tests,
+  twenty-three view-helper tests, baseline contracts, and bytecode compilation.
+- The canonical `make check` also passed from an external working directory
+  with Python 3.12.8.
+- The isolated temporary final-state `make check` baseline passed before plan
+  completion was applied to the working tree.
+- Nine isolated hostile mutations were rejected across the ID and value type
+  checks, boolean IDs, blank screen names, guard direction, regression name,
+  documentation, and plan status.
+- `sh -n scripts/check-baseline.sh` and `git diff --check` passed.
+- The historical Django stack was not installed or launched, and no live
+  Twitter request or credential was used.
