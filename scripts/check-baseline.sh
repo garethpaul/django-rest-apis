@@ -8,6 +8,7 @@ HOME_TEMPLATE="$ROOT_DIR/templates/home.html"
 BASE_TEMPLATE="$ROOT_DIR/templates/base.html"
 REQUIREMENTS="$ROOT_DIR/requirements.txt"
 README="$ROOT_DIR/README.md"
+VISION="$ROOT_DIR/VISION.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-settings-security-baseline.md"
 STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-status-normalization.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-check-wrapper.md"
@@ -21,6 +22,7 @@ CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SECURE_COOKIE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-production-secure-cookies.md"
 TWITTER_API_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-api-error-boundary.md"
 POST_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-post-redirect-get.md"
+STATUS_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-status-type-guard.md"
 CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-boundary.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
@@ -61,6 +63,7 @@ for path in \
   "docs/plans/2026-06-10-production-secure-cookies.md" \
   "docs/plans/2026-06-12-twitter-api-error-boundary.md" \
   "docs/plans/2026-06-12-twitter-post-redirect-get.md" \
+  "docs/plans/2026-06-13-twitter-status-type-guard.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -171,6 +174,29 @@ fi
 
 if ! grep -Fq "def normalize_status" "$VIEWS" || ! grep -Fq "MAX_STATUS_LENGTH = 280" "$VIEWS"; then
   printf '%s\n' "home view must normalize and bound submitted Twitter status text." >&2
+  exit 1
+fi
+
+if ! grep -Fq "not isinstance(status, STRING_TYPES)" "$VIEWS" ||
+  ! grep -Fq "test_normalize_status_ignores_non_string_values" "$VIEW_TESTS" ||
+  ! grep -Fq "test_home_does_not_post_non_string_status" "$VIEW_TESTS" ||
+  ! grep -Fq "malformed status must not reach Twitter" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter status normalization must reject non-string values before provider writes." >&2
+  exit 1
+fi
+
+if ! grep -Fq "non-string status values" "$README" ||
+  ! grep -Fq "Rejected non-string Twitter status values" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "Reject non-string Twitter status values" "$VISION"; then
+  printf '%s\n' "Project docs must record the Twitter status type boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$STATUS_TYPE_PLAN" ||
+  ! grep -Fq "Python 3.12.8 and Python 3.14.0" "$STATUS_TYPE_PLAN" ||
+  ! grep -Fq "Eight hostile mutations were rejected" "$STATUS_TYPE_PLAN" ||
+  ! grep -Fq "was not installed or launched" "$STATUS_TYPE_PLAN"; then
+  printf '%s\n' "Twitter status type plan must record completed local verification and runtime limits." >&2
   exit 1
 fi
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-13
+
+- Rejected non-string Twitter status values before normalization or provider
+  writes, with helper and home-view regressions.
+
 ## 2026-06-12
 
 - Stopped GitHub Actions checkout credential persistence and added an exact

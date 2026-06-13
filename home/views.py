@@ -15,7 +15,7 @@ except NameError:
 
 
 def normalize_status(status):
-    if status is None:
+    if status is None or not isinstance(status, STRING_TYPES):
         return None
     status = status.strip()
     if not status or len(status) > MAX_STATUS_LENGTH:

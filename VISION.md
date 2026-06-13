@@ -23,6 +23,7 @@ Priority:
 - Keep account-changing actions behind POST and CSRF protection
 - Redirect after successful status posts so browser refreshes cannot resubmit
   account-changing requests
+- Reject non-string Twitter status values before provider writes
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable

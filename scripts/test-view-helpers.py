@@ -117,6 +117,10 @@ class ViewHelperTests(unittest.TestCase):
     def test_normalize_status_ignores_overlong_text(self):
         self.assertIsNone(views.normalize_status("x" * 281))
 
+    def test_normalize_status_ignores_non_string_values(self):
+        for status in (123, True, [], {}, object()):
+            self.assertIsNone(views.normalize_status(status))
+
     def test_load_twitter_home_preserves_timeline_when_post_fails(self):
         class FakeApi:
             def PostUpdates(self, status):
@@ -211,6 +215,28 @@ class ViewHelperTests(unittest.TestCase):
                 args[1]["twitter_error"],
                 "Twitter could not post the status right now.",
             )
+        finally:
+            views.get_twitter = original_get_twitter
+
+    def test_home_does_not_post_non_string_status(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise AssertionError("malformed status must not reach Twitter")
+
+            def GetUserTimeline(self, screen_name, count):
+                return ["existing status"]
+
+        original_get_twitter = views.get_twitter
+        views.get_twitter = lambda user: FakeApi()
+        try:
+            request = types.SimpleNamespace(
+                POST={"status": ["unexpected", "list"]},
+                user=types.SimpleNamespace(username="sample-user"),
+            )
+
+            args, _kwargs = views.home(request)
+            self.assertEqual(args[1]["statuses"], ["existing status"])
+            self.assertIsNone(args[1]["twitter_error"])
         finally:
             views.get_twitter = original_get_twitter
 

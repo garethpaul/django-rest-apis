@@ -80,6 +80,7 @@ the repository root. The guard verifies that `DJANGO_SECRET_KEY`,
 `DJANGO_DEBUG`, and Twitter credential settings are environment-driven and that
 the old hardcoded `SECRET_KEY` is gone. It also runs no-Django-runtime settings
 helper tests, checks POST-only status submission, Twitter status normalization,
+rejection of non-string status values before provider writes,
 safe Twitter status links, missing social OAuth token fallback, missing
 social-auth row fallback, blank social OAuth token fallback, malformed social
 OAuth token fallback, and pinned legacy dependency ranges. It also verifies
