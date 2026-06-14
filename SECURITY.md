@@ -42,6 +42,8 @@ Malformed successful Twitter timeline results must use the same generic empty
 state instead of passing incompatible provider data into template rendering.
 Malformed successful Twitter timeline items must also reject the complete
 timeline before missing IDs, text, users, or screen names reach the template.
+Provider-controlled attribute failures must use the same generic empty state
+without exposing the exception or rendering a partial result.
 Production settings must always mark session and CSRF cookies secure; local
 debug mode may opt in when it is served over HTTPS.
 GitHub Actions runs isolated `make check` coverage on Python 3.10, 3.12, and

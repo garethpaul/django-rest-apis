@@ -32,6 +32,8 @@ Priority:
 - Contain expected Twitter API failures without exposing provider details
 - Reject malformed Twitter timeline result types before template rendering
 - Reject malformed Twitter timeline items before template field access
+- Contain provider-controlled timeline attribute failures before template field
+  access
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep production session and CSRF cookies transport-secure
 - Keep GitHub Actions aligned with the local Python `make check` baseline

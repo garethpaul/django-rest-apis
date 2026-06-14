@@ -92,8 +92,9 @@ available timeline data preserved after posting failures. Successful status
 posts redirect to `/home` before timeline loading so browser refreshes do not
 resubmit the mutation. Valid list and tuple timeline responses remain
 renderable; malformed timeline results become an empty timeline with the same
-generic load error. Within accepted collections, malformed timeline items
-reject the complete timeline unless every item provides the ID, text, and user
+generic load error. Within accepted collections, malformed timeline items and
+items whose provider attributes raise during validation reject the complete timeline
+unless every item provides the ID, text, and user
 screen name required by the template. `DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies

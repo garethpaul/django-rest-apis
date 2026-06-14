@@ -113,6 +113,18 @@ def make_status(status_id=42, text="existing status", screen_name="sample-user")
     )
 
 
+class RaisingStatus:
+    @property
+    def id(self):
+        raise RuntimeError("status accessor detail")
+
+
+class RaisingUser:
+    @property
+    def screen_name(self):
+        raise RuntimeError("user accessor detail")
+
+
 class ViewHelperTests(unittest.TestCase):
     def test_normalize_status_strips_text(self):
         self.assertEqual(views.normalize_status("  hello twitter  "), "hello twitter")
@@ -191,6 +203,14 @@ class ViewHelperTests(unittest.TestCase):
             )
         )
 
+    def test_timeline_status_rejects_raising_accessors(self):
+        self.assertFalse(views.timeline_status_is_renderable(RaisingStatus()))
+        self.assertFalse(
+            views.timeline_status_is_renderable(
+                types.SimpleNamespace(id=42, text="status", user=RaisingUser())
+            )
+        )
+
     def test_load_twitter_home_rejects_malformed_timeline_items(self):
         malformed_items = (
             None,
@@ -198,6 +218,8 @@ class ViewHelperTests(unittest.TestCase):
             make_status(text=["not", "text"]),
             make_status(screen_name=None),
             types.SimpleNamespace(id=42, text="missing user"),
+            RaisingStatus(),
+            types.SimpleNamespace(id=42, text="status", user=RaisingUser()),
         )
 
         class FakeApi:
@@ -263,7 +285,7 @@ class ViewHelperTests(unittest.TestCase):
                 raise views.twitter.TwitterError("post provider detail")
 
             def GetUserTimeline(self, screen_name, count):
-                return [make_status(), None]
+                return [make_status(), RaisingStatus()]
 
         statuses, error, posted = views.load_twitter_home(
             FakeApi(), "sample-user", "hello"

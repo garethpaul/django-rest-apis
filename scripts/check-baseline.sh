@@ -27,6 +27,7 @@ CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-bo
 EXTRA_DATA_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-extra-data-type-guard.md"
 TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.md"
 TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.md"
+TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -70,6 +71,7 @@ for path in \
   "docs/plans/2026-06-13-twitter-extra-data-type-guard.md" \
   "docs/plans/2026-06-13-twitter-timeline-type-guard.md" \
   "docs/plans/2026-06-13-twitter-timeline-item-guard.md" \
+  "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -515,6 +517,23 @@ if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_i
   exit 1
 fi
 
+if [ "$(printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fc "except Exception:")" -ne 1 ] ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | awk '
+    /try:/ { guard = NR }
+    /status_id = getattr\(status, .id., None\)/ { status_read = NR }
+    /screen_name = getattr\(user, .screen_name., None\)/ { user_read = NR }
+    /except Exception:/ { rescue = NR }
+    /return False/ { rejected = NR }
+    END { exit guard && status_read > guard && user_read > status_read && rescue > user_read && rejected > rescue ? 0 : 1 }
+  ' ||
+  ! grep -Fq "class RaisingStatus:" "$VIEW_TESTS" ||
+  ! grep -Fq "class RaisingUser:" "$VIEW_TESTS" ||
+  ! grep -Fq "test_timeline_status_rejects_raising_accessors" "$VIEW_TESTS" ||
+  ! grep -Fq "return [make_status(), RaisingStatus()]" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline item validation must contain provider attribute failures with regression coverage." >&2
+  exit 1
+fi
+
 if ! grep -Fq "return [], None, True" "$VIEWS" ||
   ! grep -Fq "if posted:" "$VIEWS" ||
   ! grep -Fq "return HttpResponseRedirect('/home')" "$VIEWS" ||
@@ -629,10 +648,31 @@ if ! grep -Fq "status: completed" "$TIMELINE_ITEM_PLAN" ||
   exit 1
 fi
 
+if ! grep -Fq "provider attributes raise during validation" "$README" ||
+  ! grep -Fq "Provider-controlled attribute failures" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Contain provider-controlled timeline attribute failures" "$VISION" ||
+  ! grep -Fq "Contained exceptions raised by provider-controlled timeline" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document Twitter timeline attribute exception containment." >&2
+  exit 1
+fi
+
 if ! grep -Fq "test_get_twitter_raises_configuration_error_when_access_tokens_are_missing" "$VIEW_TESTS"; then
   printf '%s\n' "View helper tests must cover missing Twitter access token configuration errors." >&2
   exit 1
 fi
+
+for timeline_accessor_plan_contract in \
+  "Status: Completed" \
+  "Verification: Completed" \
+  "Python 3.12.8 and Python 3.14.0" \
+  "Eight focused hostile mutations" \
+  "no actionable issues" \
+  "This change claims no live Django or Twitter provider execution"; do
+  if ! grep -Fq "$timeline_accessor_plan_contract" "$TIMELINE_ACCESSOR_PLAN"; then
+    printf '%s\n' "Twitter timeline accessor plan must record completed evidence: $timeline_accessor_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "extra_data.get('access_token')" "$VIEWS"; then
   printf '%s\n' "get_twitter must read optional social OAuth token data without KeyError." >&2

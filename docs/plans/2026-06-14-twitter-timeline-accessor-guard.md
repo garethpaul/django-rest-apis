@@ -1,6 +1,6 @@
 # Contain Twitter Timeline Attribute Failures
 
-Status: In Progress
+Status: Completed
 
 ## Context
 
@@ -52,20 +52,35 @@ Files:
 - `SECURITY.md`
 - `VISION.md`
 - `CHANGES.md`
-- `AGENTS.md`
 
 Document the provider-object exception boundary and completed validation.
 
 ## Verification
 
-Verification: Pending
+Verification: Completed
 
-- Run Python 3.12 and 3.14 helper suites, source contracts, bytecode compilation,
-  external-working-directory validation, and full `make check`.
-- Run focused hostile mutations against exception containment, nested access,
-  regression coverage, documentation, and plan completion status.
-- Inspect the exact diff, artifacts, whitespace, and credential-shaped additions
-  before committing.
+- Python 3.12.8 and Python 3.14.0 each pass seven settings tests, 24 view-helper
+  tests, source contracts, and bytecode compilation through full `make check`.
+- The external-working-directory Python 3.12.8 `make check` passes from `/tmp`.
+- Eight focused hostile mutations alter exception scope, rejection behavior,
+  status/user accessor fixtures, malformed-item coverage, failed-post
+  precedence, documentation, or plan status; every mutation is rejected.
+- Shell and Python syntax, whitespace, exact-diff, artifact, untracked-file, and
+  credential-shaped addition audits pass.
+- Plan-aware correctness, testing, maintainability, security, reliability, and
+  project-standards review found no actionable issues.
+- `agent-browser` is unavailable and the legacy project was not started; no
+  browser, Django server, database, template, social-auth, or live Twitter
+  execution is claimed.
+
+## Work Completed
+
+- Wrapped timeline status, text, nested user, screen-name, and final validation
+  operations in one provider-object exception boundary.
+- Returned `False` for raised provider attributes so the existing complete-list
+  rejection and generic timeline error handle the failure.
+- Added direct status and nested-user accessor regressions plus integration
+  coverage for failed-post error precedence.
 
 ## Scope Boundaries
 
@@ -75,3 +90,5 @@ Verification: Pending
   `TwitterError` boundary.
 - Do not claim live Django, database, social-auth, template, or Twitter provider
   execution.
+
+This change claims no live Django or Twitter provider execution.

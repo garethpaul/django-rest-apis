@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-14
+
+- Contained exceptions raised by provider-controlled timeline status and nested
+  user attributes before template rendering.
+
 ## 2026-06-13
 
 - Contained malformed Twitter timeline items before template field access,

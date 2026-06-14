@@ -40,18 +40,21 @@ def normalize_token(value):
 
 
 def timeline_status_is_renderable(status):
-    status_id = getattr(status, 'id', None)
-    text = getattr(status, 'text', None)
-    user = getattr(status, 'user', None)
-    screen_name = getattr(user, 'screen_name', None)
-    return (
-        isinstance(status_id, INTEGER_TYPES) and
-        not isinstance(status_id, bool) and
-        status_id > 0 and
-        isinstance(text, STRING_TYPES) and
-        isinstance(screen_name, STRING_TYPES) and
-        bool(screen_name.strip())
-    )
+    try:
+        status_id = getattr(status, 'id', None)
+        text = getattr(status, 'text', None)
+        user = getattr(status, 'user', None)
+        screen_name = getattr(user, 'screen_name', None)
+        return (
+            isinstance(status_id, INTEGER_TYPES) and
+            not isinstance(status_id, bool) and
+            status_id > 0 and
+            isinstance(text, STRING_TYPES) and
+            isinstance(screen_name, STRING_TYPES) and
+            bool(screen_name.strip())
+        )
+    except Exception:
+        return False
 
 
 def load_twitter_home(api, username, status):
