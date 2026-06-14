@@ -4,6 +4,7 @@
 
 - Contained exceptions raised by provider-controlled timeline status and nested
   user attributes before template rendering.
+- Rejected blank Twitter timeline status text before template rendering.
 
 ## 2026-06-13
 

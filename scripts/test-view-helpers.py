@@ -196,6 +196,7 @@ class ViewHelperTests(unittest.TestCase):
         self.assertFalse(views.timeline_status_is_renderable(make_status(status_id=0)))
         self.assertFalse(views.timeline_status_is_renderable(make_status(status_id=True)))
         self.assertFalse(views.timeline_status_is_renderable(make_status(text=None)))
+        self.assertFalse(views.timeline_status_is_renderable(make_status(text="  ")))
         self.assertFalse(views.timeline_status_is_renderable(make_status(screen_name="  ")))
         self.assertFalse(
             views.timeline_status_is_renderable(
@@ -216,6 +217,7 @@ class ViewHelperTests(unittest.TestCase):
             None,
             make_status(status_id=-1),
             make_status(text=["not", "text"]),
+            make_status(text="  "),
             make_status(screen_name=None),
             types.SimpleNamespace(id=42, text="missing user"),
             RaisingStatus(),

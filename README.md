@@ -94,8 +94,9 @@ resubmit the mutation. Valid list and tuple timeline responses remain
 renderable; malformed timeline results become an empty timeline with the same
 generic load error. Within accepted collections, malformed timeline items and
 items whose provider attributes raise during validation reject the complete timeline
-unless every item provides the ID, text, and user
-screen name required by the template. `DJANGO_DEBUG`
+unless every item provides the ID, nonblank text, and user
+screen name required by the template; blank timeline status text is rejected
+before template rendering. `DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies
 always use the secure flag; debug-mode HTTPS testing can opt in with
@@ -153,6 +154,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   successful timeline response containment.
 - See `docs/plans/2026-06-13-twitter-timeline-item-guard.md` for per-status
   template-field validation before rendering.
+- See `docs/plans/2026-06-14-twitter-timeline-text-guard.md` for the nonblank
+  provider text boundary.
 - See `docs/plans/2026-06-12-twitter-post-redirect-get.md` for duplicate status
   submission prevention.
 - See `docs/plans/2026-06-10-production-secure-cookies.md` for production

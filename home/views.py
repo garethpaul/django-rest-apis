@@ -50,6 +50,7 @@ def timeline_status_is_renderable(status):
             not isinstance(status_id, bool) and
             status_id > 0 and
             isinstance(text, STRING_TYPES) and
+            bool(text.strip()) and
             isinstance(screen_name, STRING_TYPES) and
             bool(screen_name.strip())
         )

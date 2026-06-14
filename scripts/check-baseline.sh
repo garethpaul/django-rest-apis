@@ -28,6 +28,7 @@ EXTRA_DATA_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-extra-data-type-gu
 TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.md"
 TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.md"
 TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
+TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -72,6 +73,7 @@ for path in \
   "docs/plans/2026-06-13-twitter-timeline-type-guard.md" \
   "docs/plans/2026-06-13-twitter-timeline-item-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
+  "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -514,6 +516,26 @@ if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_i
   ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_items" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_item" "$VIEW_TESTS"; then
   printf '%s\n' "Twitter timeline items must retain the tested template-field boundary." >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "bool(text.strip())" || \
+   ! grep -Fq 'make_status(text="  ")' "$VIEW_TESTS" || \
+   [ "$(grep -Fc 'make_status(text="  ")' "$VIEW_TESTS")" -ne 2 ]; then
+  printf '%s\n' "Twitter timeline text must retain nonblank helper and loader coverage." >&2
+  exit 1
+fi
+if [ ! -f "$TIMELINE_TEXT_PLAN" ] || \
+   ! grep -Fq 'Status: Completed' "$TIMELINE_TEXT_PLAN" || \
+   ! grep -Fq 'make check' "$TIMELINE_TEXT_PLAN" || \
+   ! grep -Fq 'hostile mutations' "$TIMELINE_TEXT_PLAN"; then
+  printf '%s\n' "Twitter timeline text plan must record completed verification." >&2
+  exit 1
+fi
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'blank timeline status text is rejected before template rendering' || \
+   ! grep -Fq 'Rejected blank Twitter timeline status text before template rendering' "$ROOT_DIR/CHANGES.md" || \
+   ! grep -Fq 'Reject blank provider timeline text before template rendering' "$VISION"; then
+  printf '%s\n' "Twitter timeline text guard documentation is incomplete." >&2
   exit 1
 fi
 
