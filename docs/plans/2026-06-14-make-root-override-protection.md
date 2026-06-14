@@ -1,13 +1,13 @@
 ---
 title: Make Repository Root Override Protection
 type: reliability
-status: active
+status: completed
 date: 2026-06-14
 ---
 
 # Make Repository Root Override Protection
 
-## Status: Active
+## Status: Completed
 
 ## Problem Frame
 
@@ -47,3 +47,23 @@ of the repository's deterministic baseline gate.
 - Python 3.12 and Python 3.14 where available
 - `git diff --check`
 - Isolated hostile assignment mutations
+
+## Work Completed
+
+- Protected the derived repository-root assignment with GNU Make's `override`
+  directive while preserving all seven root references and the `PYTHON`
+  override.
+- Updated the existing exact root contract and registered this plan in the
+  deterministic checker.
+- Preserved every verification target and all Django and Twitter behavior.
+
+## Verification Completed
+
+- `sh -n scripts/check-baseline.sh` passed.
+- `make lint` and `make check` passed on Python 3.12.8 and Python 3.14.0.
+- External-working-directory `make -C <repository> lint` and `make -C
+  <repository> check` passed.
+- Full checks passed with command-line and environment `ROOT=/tmp`
+  assignments, while commands continued to resolve inside the repository.
+- Three isolated hostile assignment mutations were rejected: a regular
+  assignment, a conditional assignment, and a caller-directory assignment.

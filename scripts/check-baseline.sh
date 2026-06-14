@@ -29,6 +29,7 @@ TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.
 TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.md"
 TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
 TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
+MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -74,6 +75,7 @@ for path in \
   "docs/plans/2026-06-13-twitter-timeline-item-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
+  "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -133,11 +135,24 @@ if ! grep -Fq "runs-on: ubuntu-24.04" "$CI_WORKFLOW"; then
   exit 1
 fi
 
-if ! grep -Fq 'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
+if ! grep -Fxq 'override ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
   [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 7 ]; then
-  printf '%s\n' "Make verification must resolve helper scripts from the repository root." >&2
+  printf '%s\n' "Make verification must protect and use the repository root." >&2
   exit 1
 fi
+
+for make_root_plan_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "Python 3.12.8 and Python 3.14.0" \
+  "Three isolated hostile assignment mutations were rejected"; do
+  if ! grep -Fq "$make_root_plan_contract" "$MAKE_ROOT_PLAN"; then
+    printf '%s\n' "Make-root plan must record completed evidence: $make_root_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if grep -Fq ')e-_u9#$xfu5(uw!izbq!yu+dtf1*ce5@7w42p^ro*i-+)$yy%' "$SETTINGS"; then
   printf '%s\n' "app/settings.py must not contain the old hardcoded SECRET_KEY." >&2
