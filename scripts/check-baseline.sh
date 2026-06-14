@@ -30,6 +30,8 @@ TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.
 TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
 TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
+RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
+RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
 CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
@@ -47,6 +49,7 @@ for path in \
   ".github/workflows/check.yml" \
   "CHANGES.md" \
   "README.md" \
+  "RUNTIME_VERIFICATION.md" \
   "SECURITY.md" \
   "VISION.md" \
   "Makefile" \
@@ -76,12 +79,84 @@ for path in \
   "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
+  "docs/plans/2026-06-14-django-runtime-verification.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for runtime_contract in \
+  "Commit: pending implementation commit" \
+  "Pull request: pending" \
+  "Evidence status: not run" \
+  "isolated synthetic account" \
+  "Required sanitized evidence" \
+  "Use only \`pass\`, \`fail\`, \`blocked\`, or \`not run\`" \
+  "A static check, source compile, or synthetic helper test cannot mark an" \
+  "No Django server, database migration, browser, OAuth, social-auth provider, or"; do
+  if ! grep -Fq "$runtime_contract" "$RUNTIME_VERIFICATION"; then
+    printf '%s\n' "Runtime verification matrix contract is missing: $runtime_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Ec '^\| [0-9]+ \|' "$RUNTIME_VERIFICATION")" -ne 14 ] ||
+  [ "$(grep -Ec '^\| [0-9]+ \|.*\| not run \|$' "$RUNTIME_VERIFICATION")" -ne 14 ]; then
+  printf '%s\n' "Runtime verification matrix must retain 14 explicitly not-run scenarios." >&2
+  exit 1
+fi
+
+for runtime_scenario in \
+  "Environment isolation" \
+  "Required configuration validation" \
+  "Django startup and system check" \
+  "Database migration" \
+  "Anonymous home route" \
+  "Authenticated home route" \
+  "Template escaping and rendering" \
+  "Social authentication success" \
+  "Social authentication denial" \
+  "Valid timeline collection" \
+  "Malformed provider accessor" \
+  "Successful status submission" \
+  "Provider write failure" \
+  "Logout and relaunch"; do
+  if [ "$(grep -Fc "| $runtime_scenario |" "$RUNTIME_VERIFICATION")" -ne 1 ]; then
+    printf '%s\n' "Runtime verification matrix scenario is missing or duplicated: $runtime_scenario" >&2
+    exit 1
+  fi
+done
+
+for runtime_guidance in \
+  "RUNTIME_VERIFICATION.md" \
+  "isolated synthetic accounts" \
+  "sanitized results"; do
+  if ! grep -Fq "$runtime_guidance" "$README"; then
+    printf '%s\n' "README runtime verification guidance is missing: $runtime_guidance" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Keep exact-head Django runtime evidence sanitized" "$VISION" ||
+  ! grep -Fq "Added an exact-head Django runtime verification matrix" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must retain the Django runtime evidence boundary." >&2
+  exit 1
+fi
+
+for runtime_plan_contract in \
+  "Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "Python 3.12.8 and Python 3.14.0" \
+  "Twelve isolated hostile documentation mutations were rejected" \
+  "all 14 runtime scenarios remain"; do
+  if ! grep -Fq "$runtime_plan_contract" "$RUNTIME_VERIFICATION_PLAN"; then
+    printf '%s\n' "Runtime verification plan must record completed evidence: $runtime_plan_contract" >&2
+    exit 1
+  fi
 done
 
 LOAD_TWITTER_HOME=$(awk '

@@ -40,6 +40,8 @@ Priority:
 - Keep GitHub Actions aligned with the local Python `make check` baseline
 - Keep a credential-free checkout in the read-only GitHub Actions workflow
 - Keep time-drift troubleshooting visible for OAuth failures
+- Keep exact-head Django runtime evidence sanitized and separate from portable
+  source and helper verification
 
 Next priorities:
 

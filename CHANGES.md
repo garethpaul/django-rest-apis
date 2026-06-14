@@ -2,6 +2,9 @@
 
 ## 2026-06-14
 
+- Added an exact-head Django runtime verification matrix that separates
+  portable checks from sanitized local, database, browser, OAuth, provider,
+  and live-service evidence.
 - Contained exceptions raised by provider-controlled timeline status and nested
   user attributes before template rendering.
 - Rejected blank Twitter timeline status text before template rendering.

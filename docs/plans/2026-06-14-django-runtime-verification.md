@@ -1,6 +1,6 @@
 # Django Runtime Verification Matrix
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -32,6 +32,30 @@ authentication, or live provider responses.
   execution from settings, helper, compile, or static checks.
 - Do not merge or close stacked pull requests without explicit authorization.
 
-## Verification
+## Work Completed
 
-- Pending implementation and bounded repository validation.
+- Added a 14-scenario exact-head runtime matrix covering environment setup,
+  startup, migrations, anonymous and authenticated routes, templates,
+  social-auth outcomes, timeline rendering, provider failures, status writes,
+  logout, and relaunch.
+- Required isolated synthetic accounts and provider payloads, sanitized
+  evidence fields, exact commit and pull-request attribution, and explicit
+  `pass`, `fail`, `blocked`, or `not run` statuses.
+- Documented that portable source/helper checks cannot imply Django, database,
+  browser, OAuth, social-auth provider, or live Twitter execution.
+- Added mutation-sensitive baseline contracts for the matrix and repository
+  guidance without changing Python, templates, dependencies, migrations,
+  routes, settings, or runtime configuration.
+
+## Verification Completed
+
+- `sh -n scripts/check-baseline.sh` passed.
+- The focused baseline gate passed from the repository root and an external
+  working directory.
+- `make check` passed with Python 3.12.8 and Python 3.14.0 from the repository
+  root; the external-directory gate also passed with Python 3.12.8.
+- Twelve isolated hostile documentation mutations were rejected by the
+  baseline gate.
+- No Django server, database migration, browser, OAuth, social-auth provider,
+  or live Twitter scenario was executed; all 14 runtime scenarios remain
+  truthfully marked `not run`.

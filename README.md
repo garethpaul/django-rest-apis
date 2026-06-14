@@ -108,6 +108,12 @@ read-only repository access, and a bounded runtime without installing the
 unsupported Django 1.6 dependency set. It does not persist checkout credentials
 after source retrieval.
 
+Runtime and integration claims use the exact-head checklist in
+[`RUNTIME_VERIFICATION.md`](RUNTIME_VERIFICATION.md). The checklist keeps
+portable helper results separate from local Django, database, browser, OAuth,
+social-auth provider, and live Twitter evidence.
+It requires isolated synthetic accounts and sanitized results.
+
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
 ## Configuration and Secrets
