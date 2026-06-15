@@ -1,7 +1,7 @@
 ---
 title: Twitter Timeline Result Limit
 type: reliability
-status: in_progress
+status: completed
 date: 2026-06-15
 execution: code
 ---
@@ -42,4 +42,19 @@ must reject oversized collections before rendering or traversing their items.
 - A provider that returns extra usable statuses is treated as malformed rather
   than silently truncated, keeping the response contract explicit.
 
-## Status: In Progress
+## Status: Completed
+
+## Work Completed
+
+- Reused one ten-status constant for the provider request and response guard.
+- Rejected oversized list and tuple results before item traversal or rendering.
+- Added exact-limit, oversized-result, static-contract, and documentation
+  coverage without changing post-error precedence.
+
+## Verification Completed
+
+- Focused helper and full repository tests passed.
+- Repository and external-directory `make check` passed.
+- Four hostile mutations were rejected for constant removal, response-guard
+  removal, focused-test removal, and missing completed-plan evidence.
+- No live Twitter request was executed.

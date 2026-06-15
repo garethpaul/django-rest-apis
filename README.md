@@ -99,6 +99,8 @@ by the template. Provider screen names are restricted to 1-15 ASCII letters,
 digits, or underscores before template rendering, and blank timeline status text
 is rejected before template rendering. Noncanonical local usernames are
 rejected before timeline provider I/O without rewriting the account value.
+Oversized timeline results beyond the requested ten statuses are rejected with
+the same generic load error rather than rendered or silently truncated.
 `DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies

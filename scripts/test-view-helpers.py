@@ -330,6 +330,37 @@ class ViewHelperTests(unittest.TestCase):
                 )
                 self.assertFalse(posted)
 
+    def test_load_twitter_home_accepts_exact_timeline_limit(self):
+        expected = [make_status(status_id=index + 1) for index in range(10)]
+
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                self.requested_count = count
+                return expected
+
+        api = FakeApi()
+        statuses, error, posted = views.load_twitter_home(
+            api, "sample_user", None
+        )
+
+        self.assertEqual(api.requested_count, views.TIMELINE_STATUS_LIMIT)
+        self.assertEqual(statuses, expected)
+        self.assertIsNone(error)
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_rejects_oversized_timeline_results(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(status_id=index + 1) for index in range(count + 1)]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
+
     def test_load_twitter_home_preserves_post_error_for_malformed_timeline(self):
         class FakeApi:
             def PostUpdates(self, status):

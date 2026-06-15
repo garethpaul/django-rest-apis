@@ -31,6 +31,7 @@ TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accesso
 TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
 SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-twitter-screen-name-guard.md"
 REQUEST_SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-request-name-guard.md"
+TIMELINE_RESULT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-result-limit.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
@@ -81,6 +82,7 @@ for path in \
   "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
   "docs/plans/2026-06-15-twitter-timeline-request-name-guard.md" \
+  "docs/plans/2026-06-15-twitter-timeline-result-limit.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-django-runtime-verification.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
@@ -869,6 +871,33 @@ fi
 if grep -Fq "raise Exception('No user for twitter API call')" "$VIEWS" ||
   ! grep -Fq "Twitter access token and secret must be configured" "$VIEWS"; then
   printf '%s\n' "get_twitter must fail clearly when Twitter access tokens are missing." >&2
+  exit 1
+fi
+
+if ! grep -Fq "TIMELINE_STATUS_LIMIT = 10" "$VIEWS" ||
+  ! grep -Fq "len(statuses) > TIMELINE_STATUS_LIMIT" "$VIEWS" ||
+  ! grep -Fq "test_load_twitter_home_accepts_exact_timeline_limit" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_timeline_results" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline result limit must retain implementation and focused coverage." >&2
+  exit 1
+fi
+
+for timeline_result_limit_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Verification Completed" \
+  "hostile mutations were rejected"; do
+  if ! grep -Fq "$timeline_result_limit_contract" "$TIMELINE_RESULT_LIMIT_PLAN"; then
+    printf '%s\n' "Twitter timeline result-limit plan must record completed evidence: $timeline_result_limit_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Oversized timeline results" "$README" ||
+  ! grep -Fq "Oversized successful Twitter timeline collections" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject oversized Twitter timeline collections" "$VISION" ||
+  ! grep -Fq "Rejected oversized Twitter timeline collections" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline result limit." >&2
   exit 1
 fi
 

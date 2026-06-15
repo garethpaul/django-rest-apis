@@ -46,6 +46,8 @@ Twitter timeline screen names must contain only 1-15 ASCII letters, digits, or
 underscores before they are interpolated into provider status URLs.
 Timeline request screen names must be canonical before provider I/O; malformed
 local usernames must not be normalized or sent to the timeline endpoint.
+Oversized successful Twitter timeline collections must be rejected before
+template rendering, using the same limit sent to the provider request.
 Provider-controlled attribute failures must use the same generic empty state
 without exposing the exception or rendering a partial result.
 Production settings must always mark session and CSRF cookies secure; local

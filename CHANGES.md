@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Rejected oversized Twitter timeline collections beyond the requested result
+  limit before template rendering.
 - Rejected noncanonical timeline request screen names before provider I/O.
 - Rejected noncanonical Twitter timeline screen names before template rendering.
 

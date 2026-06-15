@@ -9,6 +9,7 @@ import re
 import twitter
 
 MAX_STATUS_LENGTH = 280
+TIMELINE_STATUS_LIMIT = 10
 TWITTER_SCREEN_NAME_RE = re.compile(r'^[A-Za-z0-9_]{1,15}\Z')
 try:
     STRING_TYPES = (basestring,)
@@ -81,13 +82,19 @@ def load_twitter_home(api, username, status):
         return [], error, False
 
     try:
-        statuses = api.GetUserTimeline(screen_name=username, count=10)
+        statuses = api.GetUserTimeline(
+            screen_name=username, count=TIMELINE_STATUS_LIMIT
+        )
     except twitter.TwitterError:
         statuses = []
         if error is None:
             error = 'Twitter could not load the timeline right now.'
 
     if not isinstance(statuses, (list, tuple)):
+        statuses = []
+        if error is None:
+            error = 'Twitter could not load the timeline right now.'
+    elif len(statuses) > TIMELINE_STATUS_LIMIT:
         statuses = []
         if error is None:
             error = 'Twitter could not load the timeline right now.'
