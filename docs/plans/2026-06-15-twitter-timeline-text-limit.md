@@ -1,7 +1,7 @@
 ---
 title: Twitter Timeline Text Limit
 type: security
-status: planned
+status: completed
 date: 2026-06-15
 ---
 
@@ -50,8 +50,8 @@ precedence when an oversized timeline item follows a failed post.
 
 ### U3: Portable Contract And Guidance
 
-**Files:** `scripts/check-baseline.sh`, `AGENTS.md`, `README.md`, `SECURITY.md`,
-`VISION.md`, `CHANGES.md`, and this plan.
+**Files:** `scripts/check-baseline.sh`, `README.md`, `SECURITY.md`, `VISION.md`,
+`CHANGES.md`, and this plan.
 
 Protect the implementation, focused tests, maintained guidance, and completed
 verification evidence.
@@ -68,7 +68,18 @@ verification evidence.
 
 ## Completion Evidence
 
-- Pending implementation and verification.
+- Reused `MAX_STATUS_LENGTH` to reject oversized provider timeline text while
+  preserving nonblank text at exactly 280 characters.
+- Added focused exact-limit, oversized-result, and posting-error precedence
+  regressions; the two oversized scenarios failed before the source guard.
+- repository-root and external-directory `make check` passed on Python 3.12 and Python 3.14 with 7 settings tests and 34 view-helper tests per gate.
+- Six hostile mutations were rejected for predicate removal, an off-by-one
+  boundary, focused-test removal, precedence-test removal, missing guidance,
+  and incomplete plan status.
+- Exact-path diff, Python-cache cleanup, generated-artifact,
+  dependency/workflow-drift, conflict-marker, whitespace, and
+  credential-shaped-addition audits passed.
+- No live Django, database, OAuth, browser, or Twitter execution was performed.
 
 ## Scope Boundaries
 

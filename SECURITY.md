@@ -48,6 +48,8 @@ Timeline request screen names must be canonical before provider I/O; malformed
 local usernames must not be normalized or sent to the timeline endpoint.
 Oversized successful Twitter timeline collections must be rejected before
 template rendering, using the same limit sent to the provider request.
+Oversized provider-controlled Twitter timeline text must reject the complete
+collection before template rendering, using the posting text limit.
 Provider-controlled attribute failures must use the same generic empty state
 without exposing the exception or rendering a partial result.
 Production settings must always mark session and CSRF cookies secure; local

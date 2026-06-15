@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Rejected oversized provider timeline text before template rendering while
+  preserving text at the configured posting limit.
 - Rejected oversized Twitter timeline collections beyond the requested result
   limit before template rendering.
 - Rejected noncanonical timeline request screen names before provider I/O.

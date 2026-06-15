@@ -233,6 +233,44 @@ class ViewHelperTests(unittest.TestCase):
             )
         )
 
+    def test_timeline_status_accepts_exact_text_limit(self):
+        self.assertTrue(
+            views.timeline_status_is_renderable(
+                make_status(text="x" * views.MAX_STATUS_LENGTH)
+            )
+        )
+
+    def test_load_twitter_home_rejects_oversized_timeline_text(self):
+        oversized_status = make_status(text="x" * (views.MAX_STATUS_LENGTH + 1))
+
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(), oversized_status]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_preserves_post_error_for_oversized_timeline_text(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise views.twitter.TwitterError("post provider detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(text="x" * (views.MAX_STATUS_LENGTH + 1))]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", "hello"
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not post the status right now.")
+        self.assertFalse(posted)
+
     def test_twitter_screen_name_accepts_canonical_values(self):
         for screen_name in ("a", "SampleUser", "sample_user", "user123", "x" * 15):
             with self.subTest(screen_name=screen_name):

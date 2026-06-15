@@ -61,6 +61,7 @@ def timeline_status_is_renderable(status):
             status_id > 0 and
             isinstance(text, STRING_TYPES) and
             bool(text.strip()) and
+            len(text) <= MAX_STATUS_LENGTH and
             twitter_screen_name_is_valid(screen_name)
         )
     except Exception:

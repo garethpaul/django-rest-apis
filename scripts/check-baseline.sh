@@ -32,6 +32,7 @@ TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.
 SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-twitter-screen-name-guard.md"
 REQUEST_SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-request-name-guard.md"
 TIMELINE_RESULT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-result-limit.md"
+TIMELINE_TEXT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-text-limit.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
@@ -898,6 +899,33 @@ if ! grep -Fq "Oversized timeline results" "$README" ||
   ! grep -Fq "Reject oversized Twitter timeline collections" "$VISION" ||
   ! grep -Fq "Rejected oversized Twitter timeline collections" "$ROOT_DIR/CHANGES.md"; then
   printf '%s\n' "Project guidance must document the Twitter timeline result limit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "len(text) <= MAX_STATUS_LENGTH" "$VIEWS" ||
+  ! grep -Fq "test_timeline_status_accepts_exact_text_limit" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_timeline_text" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_preserves_post_error_for_oversized_timeline_text" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline text limit must retain implementation and focused coverage." >&2
+  exit 1
+fi
+
+for timeline_text_limit_contract in \
+  "status: completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "hostile mutations" \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$timeline_text_limit_contract" "$TIMELINE_TEXT_LIMIT_PLAN"; then
+    printf '%s\n' "Twitter timeline text-limit plan must record completed evidence: $timeline_text_limit_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Provider timeline text longer than 280 characters" "$README" ||
+  ! grep -Fq "Oversized provider-controlled Twitter timeline text" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject oversized provider timeline text" "$VISION" ||
+  ! grep -Fq "Rejected oversized provider timeline text" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline text limit." >&2
   exit 1
 fi
 
