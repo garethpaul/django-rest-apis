@@ -26,7 +26,11 @@ def normalize_status(status):
     if status is None or not isinstance(status, STRING_TYPES):
         return None
     status = status.strip()
-    if not status or len(status) > MAX_STATUS_LENGTH:
+    if (
+        not status or
+        len(status) > MAX_STATUS_LENGTH or
+        not twitter_text_is_utf8_encodable(status)
+    ):
         return None
     return status
 

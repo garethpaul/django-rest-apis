@@ -38,6 +38,8 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this Django sample, missing Twitter access tokens should fail with an explicit Django configuration error before an API client is constructed.
 Expected Twitter API errors should render stable generic messages and must not
 expose raw provider exception details to authenticated users.
+Unencodable user-authored Twitter status text must be rejected before provider
+writes so request encoding failures do not escape the view boundary.
 Malformed successful Twitter timeline results must use the same generic empty
 state instead of passing incompatible provider data into template rendering.
 Malformed successful Twitter timeline items must also reject the complete

@@ -1,6 +1,6 @@
 # Twitter Status Text Surrogate Guard
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -56,3 +56,25 @@ for the provider request before invoking the provider client.
 - shell syntax, Python compilation, exact diff, generated-artifact,
   dependency/workflow/template-drift, conflict-marker, whitespace, and secret
   audits
+
+## Work Completed
+
+- Reused the timeline UTF-8 encodability predicate in outbound status
+  normalization after trimming and length validation.
+- Added high- and low-surrogate rejection, valid supplementary-character
+  preservation, and full home-flow provider-bypass regressions.
+- Registered implementation, tests, guidance, and completed-plan evidence in
+  the portable baseline checker.
+
+## Verification Completed
+
+- The focused status and complete helper suites passed after reproducing the
+  prior unencodable value accepted by `normalize_status`.
+- Python 3.12 and Python 3.14 repository-root and external-directory `make check` passed.
+- Eight isolated hostile mutations covering the predicate, high and low
+  surrogate fixtures, provider bypass, valid Unicode preservation, guidance,
+  plan status, and verification evidence were rejected.
+- Shell syntax, Python compilation, exact diff, generated-artifact,
+  dependency/workflow/template-drift, conflict-marker, whitespace, and secret
+  audits passed before commit.
+- No live Django, database, OAuth, browser, or Twitter execution was performed.

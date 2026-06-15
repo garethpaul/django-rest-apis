@@ -24,6 +24,7 @@ Priority:
 - Redirect after successful status posts so browser refreshes cannot resubmit
   account-changing requests
 - Reject non-string Twitter status values before provider writes
+- Reject status text that cannot be encoded as UTF-8 before provider writes
 - Fall back to environment Twitter tokens when saved social-auth tokens are absent
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable

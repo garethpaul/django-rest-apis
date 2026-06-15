@@ -2,6 +2,8 @@
 
 ## 2026-06-15
 
+- Rejected lone-surrogate status text before provider writes while preserving
+  valid supplementary Unicode.
 - Rejected lone-surrogate provider timeline text before response encoding.
 - Rejected provider timeline status IDs outside the unsigned 64-bit range
   before permalink rendering.

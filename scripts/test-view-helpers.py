@@ -141,6 +141,17 @@ class ViewHelperTests(unittest.TestCase):
         for status in (123, True, [], {}, object()):
             self.assertIsNone(views.normalize_status(status))
 
+    def test_normalize_status_rejects_lone_surrogates(self):
+        for status in (u"high \ud800", u"low \udfff"):
+            with self.subTest(status=repr(status)):
+                self.assertIsNone(views.normalize_status(status))
+
+    def test_normalize_status_preserves_valid_supplementary_text(self):
+        self.assertEqual(
+            views.normalize_status(u"  diamond \U0001f48e  "),
+            u"diamond \U0001f48e",
+        )
+
     def test_load_twitter_home_preserves_timeline_when_post_fails(self):
         class FakeApi:
             def PostUpdates(self, status):
@@ -577,6 +588,30 @@ class ViewHelperTests(unittest.TestCase):
             args, _kwargs = views.home(request)
             self.assertEqual(args[1]["statuses"], [make_status()])
             self.assertIsNone(args[1]["twitter_error"])
+        finally:
+            views.get_twitter = original_get_twitter
+
+    def test_home_does_not_post_lone_surrogate_status(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise AssertionError("unencodable status must not reach Twitter")
+
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status()]
+
+        original_get_twitter = views.get_twitter
+        views.get_twitter = lambda user: FakeApi()
+        try:
+            for status in (u"high \ud800", u"low \udfff"):
+                with self.subTest(status=repr(status)):
+                    request = types.SimpleNamespace(
+                        POST={"status": status},
+                        user=types.SimpleNamespace(username="sample_user"),
+                    )
+
+                    args, _kwargs = views.home(request)
+                    self.assertEqual(args[1]["statuses"], [make_status()])
+                    self.assertIsNone(args[1]["twitter_error"])
         finally:
             views.get_twitter = original_get_twitter
 
