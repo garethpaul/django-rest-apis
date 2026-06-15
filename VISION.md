@@ -36,6 +36,7 @@ Priority:
   access
 - Reject blank provider timeline text before template rendering
 - Reject noncanonical provider screen names before template rendering
+- Reject noncanonical timeline request names before provider I/O
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep production session and CSRF cookies transport-secure
 - Keep GitHub Actions aligned with the local Python `make check` baseline

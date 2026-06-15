@@ -30,6 +30,7 @@ TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.
 TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
 TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
 SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-twitter-screen-name-guard.md"
+REQUEST_SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-request-name-guard.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
@@ -79,6 +80,7 @@ for path in \
   "docs/plans/2026-06-13-twitter-timeline-item-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
   "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
+  "docs/plans/2026-06-15-twitter-timeline-request-name-guard.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-django-runtime-verification.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
@@ -636,6 +638,34 @@ if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'screen names ar
    ! grep -Fq 'Rejected noncanonical Twitter timeline screen names before template rendering' "$ROOT_DIR/CHANGES.md" || \
    ! grep -Fq 'Reject noncanonical provider screen names before template rendering' "$VISION"; then
   printf '%s\n' "Twitter timeline screen-name guard documentation is incomplete." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc 'if not twitter_screen_name_is_valid(username):')" -ne 1 ] || \
+   ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
+     /if not twitter_screen_name_is_valid\(username\):/ { guard = NR }
+     /statuses = api.GetUserTimeline\(/ { request = NR }
+     END { exit guard && request > guard ? 0 : 1 }
+   ' || \
+   ! grep -Fq 'test_load_twitter_home_rejects_noncanonical_request_screen_name' "$VIEW_TESTS" || \
+   ! grep -Fq 'test_load_twitter_home_preserves_post_error_for_invalid_request_name' "$VIEW_TESTS" || \
+   [ "$(grep -Fc 'invalid screen name must not reach provider' "$VIEW_TESTS")" -ne 2 ]; then
+  printf '%s\n' "Twitter timeline requests must reject noncanonical screen names before provider I/O." >&2
+  exit 1
+fi
+if [ ! -f "$REQUEST_SCREEN_NAME_PLAN" ] || \
+   ! grep -Fq 'Status: Completed' "$REQUEST_SCREEN_NAME_PLAN" || \
+   ! grep -Fq '29 view helper tests' "$REQUEST_SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'hostile mutations were rejected' "$REQUEST_SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'external working directory' "$REQUEST_SCREEN_NAME_PLAN"; then
+  printf '%s\n' "Twitter timeline request screen-name plan must record completed verification." >&2
+  exit 1
+fi
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'Noncanonical local usernames are rejected before timeline provider I/O' || \
+   ! grep -Fq 'Timeline request screen names must be canonical before provider I/O' "$ROOT_DIR/SECURITY.md" || \
+   ! grep -Fq 'Reject noncanonical timeline request names before provider I/O' "$VISION" || \
+   ! grep -Fq 'Rejected noncanonical timeline request screen names before provider I/O' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Twitter timeline request screen-name documentation is incomplete." >&2
   exit 1
 fi
 

@@ -153,13 +153,13 @@ class ViewHelperTests(unittest.TestCase):
                 return [make_status()]
 
         api = FakeApi()
-        statuses, error, posted = views.load_twitter_home(api, "sample-user", "hello")
+        statuses, error, posted = views.load_twitter_home(api, "sample_user", "hello")
 
         self.assertEqual(statuses, [make_status()])
         self.assertEqual(error, "Twitter could not post the status right now.")
         self.assertFalse(posted)
         self.assertEqual(api.status, "hello")
-        self.assertEqual(api.screen_name, "sample-user")
+        self.assertEqual(api.screen_name, "sample_user")
         self.assertEqual(api.count, 10)
 
     def test_load_twitter_home_returns_stable_error_when_timeline_fails(self):
@@ -167,7 +167,7 @@ class ViewHelperTests(unittest.TestCase):
             def GetUserTimeline(self, screen_name, count):
                 raise views.twitter.TwitterError("provider detail")
 
-        statuses, error, posted = views.load_twitter_home(FakeApi(), "sample-user", None)
+        statuses, error, posted = views.load_twitter_home(FakeApi(), "sample_user", None)
 
         self.assertEqual(statuses, [])
         self.assertEqual(error, "Twitter could not load the timeline right now.")
@@ -183,11 +183,40 @@ class ViewHelperTests(unittest.TestCase):
                 return (first_status, second_status)
 
         statuses, error, posted = views.load_twitter_home(
-            FakeApi(), "sample-user", None
+            FakeApi(), "sample_user", None
         )
 
         self.assertEqual(statuses, (first_status, second_status))
         self.assertIsNone(error)
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_rejects_noncanonical_request_screen_name(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                raise AssertionError("invalid screen name must not reach provider")
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample-user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_preserves_post_error_for_invalid_request_name(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise views.twitter.TwitterError("post provider detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                raise AssertionError("invalid screen name must not reach provider")
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample-user", "hello"
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not post the status right now.")
         self.assertFalse(posted)
 
     def test_timeline_status_requires_template_fields(self):
@@ -257,7 +286,7 @@ class ViewHelperTests(unittest.TestCase):
         for malformed_item in malformed_items:
             with self.subTest(item=repr(malformed_item)):
                 statuses, error, posted = views.load_twitter_home(
-                    FakeApi(malformed_item), "sample-user", None
+                    FakeApi(malformed_item), "sample_user", None
                 )
 
                 self.assertEqual(statuses, [])
@@ -272,7 +301,7 @@ class ViewHelperTests(unittest.TestCase):
                 return [make_status(), make_status(screen_name="sample/user")]
 
         statuses, error, posted = views.load_twitter_home(
-            FakeApi(), "sample-user", None
+            FakeApi(), "sample_user", None
         )
 
         self.assertEqual(statuses, [])
@@ -292,7 +321,7 @@ class ViewHelperTests(unittest.TestCase):
         for malformed_result in malformed_results:
             with self.subTest(result=repr(malformed_result)):
                 statuses, error, posted = views.load_twitter_home(
-                    FakeApi(malformed_result), "sample-user", None
+                    FakeApi(malformed_result), "sample_user", None
                 )
 
                 self.assertEqual(statuses, [])
@@ -310,7 +339,7 @@ class ViewHelperTests(unittest.TestCase):
                 return None
 
         statuses, error, posted = views.load_twitter_home(
-            FakeApi(), "sample-user", "hello"
+            FakeApi(), "sample_user", "hello"
         )
 
         self.assertEqual(statuses, [])
@@ -326,7 +355,7 @@ class ViewHelperTests(unittest.TestCase):
                 return [make_status(), RaisingStatus()]
 
         statuses, error, posted = views.load_twitter_home(
-            FakeApi(), "sample-user", "hello"
+            FakeApi(), "sample_user", "hello"
         )
 
         self.assertEqual(statuses, [])
@@ -363,7 +392,7 @@ class ViewHelperTests(unittest.TestCase):
         try:
             request = types.SimpleNamespace(
                 POST={"status": "  hello  "},
-                user=types.SimpleNamespace(username="sample-user"),
+                user=types.SimpleNamespace(username="sample_user"),
             )
 
             self.assertEqual(views.home(request), "/home")
@@ -384,7 +413,7 @@ class ViewHelperTests(unittest.TestCase):
         try:
             request = types.SimpleNamespace(
                 POST={"status": "hello"},
-                user=types.SimpleNamespace(username="sample-user"),
+                user=types.SimpleNamespace(username="sample_user"),
             )
 
             args, _kwargs = views.home(request)
@@ -410,7 +439,7 @@ class ViewHelperTests(unittest.TestCase):
         try:
             request = types.SimpleNamespace(
                 POST={"status": ["unexpected", "list"]},
-                user=types.SimpleNamespace(username="sample-user"),
+                user=types.SimpleNamespace(username="sample_user"),
             )
 
             args, _kwargs = views.home(request)

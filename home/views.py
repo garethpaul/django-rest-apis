@@ -75,6 +75,11 @@ def load_twitter_home(api, username, status):
         except twitter.TwitterError:
             error = 'Twitter could not post the status right now.'
 
+    if not twitter_screen_name_is_valid(username):
+        if error is None:
+            error = 'Twitter could not load the timeline right now.'
+        return [], error, False
+
     try:
         statuses = api.GetUserTimeline(screen_name=username, count=10)
     except twitter.TwitterError:

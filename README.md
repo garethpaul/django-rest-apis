@@ -97,7 +97,9 @@ items whose provider attributes raise during validation reject the complete time
 unless every item provides the ID, nonblank text, and user screen name required
 by the template. Provider screen names are restricted to 1-15 ASCII letters,
 digits, or underscores before template rendering, and blank timeline status text
-is rejected before template rendering. `DJANGO_DEBUG`
+is rejected before template rendering. Noncanonical local usernames are
+rejected before timeline provider I/O without rewriting the account value.
+`DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies
 always use the secure flag; debug-mode HTTPS testing can opt in with

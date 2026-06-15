@@ -1,6 +1,6 @@
 # Twitter Timeline Request Screen-Name Guard
 
-Status: In Progress
+Status: Completed
 
 ## Problem
 
@@ -49,4 +49,15 @@ though it cannot be a canonical Twitter screen name.
 
 ## Verification
 
-- Pending implementation and bounded validation.
+- The test-first helper run failed only the two new provider non-invocation
+  regressions before the source guard was added; all 29 view helper tests then
+  passed.
+- Six effective hostile mutations were rejected for guard removal, inverted
+  validation, either regression removal, README contract removal, and reopened
+  plan status.
+- Disposable completed-plan `make check` gates passed with Python 3.12 and
+  Python 3.14 from both the repository root and an external working directory.
+- Final worktree validation passed the same root and external-directory matrix
+  after this completed evidence was recorded.
+- This change claims no live Django, database, OAuth, browser, or Twitter
+  provider execution.
