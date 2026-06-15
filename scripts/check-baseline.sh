@@ -33,6 +33,7 @@ SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-twitter-screen-name-guard.
 REQUEST_SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-request-name-guard.md"
 TIMELINE_RESULT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-result-limit.md"
 TIMELINE_TEXT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-text-limit.md"
+TIMELINE_STATUS_ID_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-status-id-limit.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
@@ -84,6 +85,7 @@ for path in \
   "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
   "docs/plans/2026-06-15-twitter-timeline-request-name-guard.md" \
   "docs/plans/2026-06-15-twitter-timeline-result-limit.md" \
+  "docs/plans/2026-06-15-twitter-timeline-status-id-limit.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-django-runtime-verification.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
@@ -926,6 +928,35 @@ if ! grep -Fq "Provider timeline text longer than 280 characters" "$README" ||
   ! grep -Fq "Reject oversized provider timeline text" "$VISION" ||
   ! grep -Fq "Rejected oversized provider timeline text" "$ROOT_DIR/CHANGES.md"; then
   printf '%s\n' "Project guidance must document the Twitter timeline text limit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "MAX_TWITTER_STATUS_ID = (1 << 64) - 1" "$VIEWS" ||
+  ! grep -Fq "status_id <= MAX_TWITTER_STATUS_ID" "$VIEWS" ||
+  ! grep -Fq "test_timeline_status_bounds_unsigned_64_bit_ids" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_status_ids" "$VIEW_TESTS" ||
+  ! grep -Fq "views.MAX_TWITTER_STATUS_ID + 1" "$VIEW_TESTS" ||
+  ! grep -Fq "status_id=10**5000" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline status ID limit must retain implementation and focused coverage." >&2
+  exit 1
+fi
+
+for timeline_status_id_limit_contract in \
+  "Status: Completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "Seven hostile mutations" \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$timeline_status_id_limit_contract" "$TIMELINE_STATUS_ID_LIMIT_PLAN"; then
+    printf '%s\n' "Twitter timeline status-ID plan must record completed evidence: $timeline_status_id_limit_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Provider timeline status IDs outside the unsigned 64-bit range" "$README" ||
+  ! grep -Fq "Oversized provider-controlled Twitter status IDs" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject provider timeline status IDs outside unsigned 64-bit range" "$VISION" ||
+  ! grep -Fq "Rejected provider timeline status IDs outside the unsigned 64-bit range" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline status ID limit." >&2
   exit 1
 fi
 

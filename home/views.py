@@ -9,6 +9,7 @@ import re
 import twitter
 
 MAX_STATUS_LENGTH = 280
+MAX_TWITTER_STATUS_ID = (1 << 64) - 1
 TIMELINE_STATUS_LIMIT = 10
 TWITTER_SCREEN_NAME_RE = re.compile(r'^[A-Za-z0-9_]{1,15}\Z')
 try:
@@ -59,6 +60,7 @@ def timeline_status_is_renderable(status):
             isinstance(status_id, INTEGER_TYPES) and
             not isinstance(status_id, bool) and
             status_id > 0 and
+            status_id <= MAX_TWITTER_STATUS_ID and
             isinstance(text, STRING_TYPES) and
             bool(text.strip()) and
             len(text) <= MAX_STATUS_LENGTH and

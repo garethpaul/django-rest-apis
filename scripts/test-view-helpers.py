@@ -240,6 +240,43 @@ class ViewHelperTests(unittest.TestCase):
             )
         )
 
+    def test_timeline_status_bounds_unsigned_64_bit_ids(self):
+        self.assertTrue(
+            views.timeline_status_is_renderable(
+                make_status(status_id=views.MAX_TWITTER_STATUS_ID)
+            )
+        )
+        self.assertFalse(
+            views.timeline_status_is_renderable(
+                make_status(status_id=views.MAX_TWITTER_STATUS_ID + 1)
+            )
+        )
+        self.assertFalse(
+            views.timeline_status_is_renderable(make_status(status_id=10**5000))
+        )
+
+    def test_load_twitter_home_rejects_oversized_status_ids(self):
+        oversized_ids = (views.MAX_TWITTER_STATUS_ID + 1, 10**5000)
+
+        class FakeApi:
+            def __init__(self, status_id):
+                self.status_id = status_id
+
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(), make_status(status_id=self.status_id)]
+
+        for status_id in oversized_ids:
+            with self.subTest(bit_length=status_id.bit_length()):
+                statuses, error, posted = views.load_twitter_home(
+                    FakeApi(status_id), "sample_user", None
+                )
+
+                self.assertEqual(statuses, [])
+                self.assertEqual(
+                    error, "Twitter could not load the timeline right now."
+                )
+                self.assertFalse(posted)
+
     def test_load_twitter_home_rejects_oversized_timeline_text(self):
         oversized_status = make_status(text="x" * (views.MAX_STATUS_LENGTH + 1))
 

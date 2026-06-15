@@ -1,6 +1,6 @@
 # Twitter Timeline Status ID Limit
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -55,8 +55,20 @@ before they reach templates.
 
 ## Work Completed
 
-Pending implementation.
+- Added `MAX_TWITTER_STATUS_ID` at the unsigned 64-bit maximum and enforced it
+  alongside the existing positive non-boolean integer predicate.
+- Added exact-maximum, first-invalid, and 5,001-digit ID regressions plus
+  complete-timeline rejection coverage.
+- Registered implementation, tests, guidance, and completed-plan evidence in
+  the portable baseline checker.
 
 ## Verification Completed
 
-Pending implementation and validation.
+- The two focused status-ID tests passed after failing before implementation.
+- Python 3.12 and Python 3.14 repository-root and external-directory `make check` passed.
+- Seven hostile mutations covering the constant, predicate, off-by-one limit,
+  focused test, complete-timeline test, guidance, and plan status were rejected.
+- Shell syntax, Python compilation, exact diff, generated-artifact,
+  dependency/workflow-drift, conflict-marker, whitespace, and secret audits
+  passed before commit.
+- No live Django, database, OAuth, browser, or Twitter execution was performed.
