@@ -34,6 +34,7 @@ REQUEST_SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-reque
 TIMELINE_RESULT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-result-limit.md"
 TIMELINE_TEXT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-text-limit.md"
 TIMELINE_STATUS_ID_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-status-id-limit.md"
+TIMELINE_TEXT_SURROGATE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-text-surrogate-guard.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
@@ -86,6 +87,7 @@ for path in \
   "docs/plans/2026-06-15-twitter-timeline-request-name-guard.md" \
   "docs/plans/2026-06-15-twitter-timeline-result-limit.md" \
   "docs/plans/2026-06-15-twitter-timeline-status-id-limit.md" \
+  "docs/plans/2026-06-15-twitter-timeline-text-surrogate-guard.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-django-runtime-verification.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
@@ -957,6 +959,36 @@ if ! grep -Fq "Provider timeline status IDs outside the unsigned 64-bit range" "
   ! grep -Fq "Reject provider timeline status IDs outside unsigned 64-bit range" "$VISION" ||
   ! grep -Fq "Rejected provider timeline status IDs outside the unsigned 64-bit range" "$ROOT_DIR/CHANGES.md"; then
   printf '%s\n' "Project guidance must document the Twitter timeline status ID limit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "def twitter_text_is_utf8_encodable(value):" "$VIEWS" || \
+  ! grep -Fq "value.encode('utf-8')" "$VIEWS" || \
+  ! grep -Fq "except UnicodeError:" "$VIEWS" || \
+  ! grep -Fq "twitter_text_is_utf8_encodable(text)" "$VIEWS" || \
+  ! grep -Fq "test_timeline_status_rejects_lone_surrogates" "$VIEW_TESTS" || \
+  ! grep -Fq "test_timeline_status_preserves_valid_supplementary_text" "$VIEW_TESTS" || \
+  ! grep -Fq "test_load_twitter_home_rejects_lone_surrogate_text" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline text must retain UTF-8 encodability coverage." >&2
+  exit 1
+fi
+
+for timeline_text_surrogate_contract in \
+  "Status: Completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "hostile mutations" \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$timeline_text_surrogate_contract" "$TIMELINE_TEXT_SURROGATE_PLAN"; then
+    printf '%s\n' "Twitter timeline surrogate plan must record completed evidence: $timeline_text_surrogate_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Lone-surrogate provider timeline text" "$README" || \
+  ! grep -Fq "Unencodable provider-controlled Twitter timeline text" "$ROOT_DIR/SECURITY.md" || \
+  ! grep -Fq "Reject provider timeline text that cannot be encoded as UTF-8" "$VISION" || \
+  ! grep -Fq "Rejected lone-surrogate provider timeline text" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline surrogate guard." >&2
   exit 1
 fi
 

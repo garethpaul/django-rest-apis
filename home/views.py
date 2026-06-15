@@ -50,6 +50,16 @@ def twitter_screen_name_is_valid(value):
     )
 
 
+def twitter_text_is_utf8_encodable(value):
+    if not isinstance(value, STRING_TYPES):
+        return False
+    try:
+        value.encode('utf-8')
+    except UnicodeError:
+        return False
+    return True
+
+
 def timeline_status_is_renderable(status):
     try:
         status_id = getattr(status, 'id', None)
@@ -64,6 +74,7 @@ def timeline_status_is_renderable(status):
             isinstance(text, STRING_TYPES) and
             bool(text.strip()) and
             len(text) <= MAX_STATUS_LENGTH and
+            twitter_text_is_utf8_encodable(text) and
             twitter_screen_name_is_valid(screen_name)
         )
     except Exception:

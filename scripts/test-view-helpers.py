@@ -292,6 +292,32 @@ class ViewHelperTests(unittest.TestCase):
         self.assertEqual(error, "Twitter could not load the timeline right now.")
         self.assertFalse(posted)
 
+    def test_timeline_status_rejects_lone_surrogates(self):
+        for text in ("high-\ud800-surrogate", "low-\udfff-surrogate"):
+            with self.subTest(text=repr(text)):
+                self.assertFalse(
+                    views.timeline_status_is_renderable(make_status(text=text))
+                )
+
+    def test_timeline_status_preserves_valid_supplementary_text(self):
+        text = "valid \U0001f680 status"
+
+        self.assertTrue(views.timeline_status_is_renderable(make_status(text=text)))
+        self.assertEqual(text.encode("utf-8").decode("utf-8"), text)
+
+    def test_load_twitter_home_rejects_lone_surrogate_text(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(), make_status(text="provider-\ud800-text")]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
+
     def test_load_twitter_home_preserves_post_error_for_oversized_timeline_text(self):
         class FakeApi:
             def PostUpdates(self, status):

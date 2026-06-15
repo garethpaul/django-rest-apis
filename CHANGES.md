@@ -2,6 +2,7 @@
 
 ## 2026-06-15
 
+- Rejected lone-surrogate provider timeline text before response encoding.
 - Rejected provider timeline status IDs outside the unsigned 64-bit range
   before permalink rendering.
 - Rejected oversized provider timeline text before template rendering while

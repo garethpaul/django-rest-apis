@@ -105,6 +105,8 @@ Provider timeline text longer than 280 characters rejects the complete result
 before template rendering, while exact-limit text remains accepted.
 Provider timeline status IDs outside the unsigned 64-bit range reject the
 complete result before permalink rendering.
+Lone-surrogate provider timeline text rejects the complete result before
+response encoding while valid supplementary Unicode remains renderable.
 `DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies

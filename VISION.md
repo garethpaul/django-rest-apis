@@ -40,6 +40,7 @@ Priority:
 - Reject oversized Twitter timeline collections before template rendering
 - Reject oversized provider timeline text before template rendering
 - Reject provider timeline status IDs outside unsigned 64-bit range
+- Reject provider timeline text that cannot be encoded as UTF-8
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep production session and CSRF cookies transport-secure
 - Keep GitHub Actions aligned with the local Python `make check` baseline

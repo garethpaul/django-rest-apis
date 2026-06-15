@@ -1,6 +1,6 @@
 # Twitter Timeline Text Surrogate Guard
 
-## Status: Planned
+## Status: Completed
 
 ## Context
 
@@ -49,3 +49,25 @@ encoded for an HTTP response before it reaches the template.
   guidance, and plan-status mutations
 - shell syntax, Python compilation, exact diff, generated-artifact,
   dependency/workflow-drift, conflict-marker, whitespace, and secret audits
+
+## Work Completed
+
+- Added a UTF-8 encodability helper with a legacy-compatible Unicode failure
+  boundary to the existing timeline item validation.
+- Added high- and low-surrogate rejection, complete-timeline rejection, and
+  valid supplementary-character preservation regressions.
+- Registered implementation, tests, guidance, and completed-plan evidence in
+  the portable baseline checker.
+
+## Verification Completed
+
+- The focused timeline surrogate tests passed after reproducing the prior
+  `UnicodeEncodeError` under Python 3.12.
+- Python 3.12 and Python 3.14 repository-root and external-directory `make check` passed.
+- Focused hostile mutations covering the helper, predicate, focused tests,
+  complete-timeline test, valid-Unicode preservation, guidance, and plan
+  status were rejected.
+- Shell syntax, Python compilation, exact diff, generated-artifact,
+  dependency/workflow-drift, conflict-marker, whitespace, and secret audits
+  passed before commit.
+- No live Django, database, OAuth, browser, or Twitter execution was performed.
