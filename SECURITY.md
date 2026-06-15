@@ -42,6 +42,8 @@ Malformed successful Twitter timeline results must use the same generic empty
 state instead of passing incompatible provider data into template rendering.
 Malformed successful Twitter timeline items must also reject the complete
 timeline before missing IDs, text, users, or screen names reach the template.
+Twitter timeline screen names must contain only 1-15 ASCII letters, digits, or
+underscores before they are interpolated into provider status URLs.
 Provider-controlled attribute failures must use the same generic empty state
 without exposing the exception or rendering a partial result.
 Production settings must always mark session and CSRF cookies secure; local

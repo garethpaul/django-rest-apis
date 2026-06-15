@@ -105,7 +105,7 @@ def load_views_module():
 views = load_views_module()
 
 
-def make_status(status_id=42, text="existing status", screen_name="sample-user"):
+def make_status(status_id=42, text="existing status", screen_name="sample_user"):
     return types.SimpleNamespace(
         id=status_id,
         text=text,
@@ -204,6 +204,29 @@ class ViewHelperTests(unittest.TestCase):
             )
         )
 
+    def test_twitter_screen_name_accepts_canonical_values(self):
+        for screen_name in ("a", "SampleUser", "sample_user", "user123", "x" * 15):
+            with self.subTest(screen_name=screen_name):
+                self.assertTrue(views.twitter_screen_name_is_valid(screen_name))
+
+    def test_twitter_screen_name_rejects_noncanonical_values(self):
+        invalid_screen_names = (
+            None,
+            "",
+            "  ",
+            "@sample_user",
+            "sample-user",
+            "sample.user",
+            "sample/user",
+            "sample user",
+            "caf\u00e9",
+            "x" * 16,
+        )
+
+        for screen_name in invalid_screen_names:
+            with self.subTest(screen_name=screen_name):
+                self.assertFalse(views.twitter_screen_name_is_valid(screen_name))
+
     def test_timeline_status_rejects_raising_accessors(self):
         self.assertFalse(views.timeline_status_is_renderable(RaisingStatus()))
         self.assertFalse(
@@ -242,6 +265,19 @@ class ViewHelperTests(unittest.TestCase):
                     error, "Twitter could not load the timeline right now."
                 )
                 self.assertFalse(posted)
+
+    def test_load_twitter_home_rejects_path_like_screen_name(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status(), make_status(screen_name="sample/user")]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample-user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
 
     def test_load_twitter_home_rejects_malformed_timeline_results(self):
         malformed_results = (None, {}, "single status", 123, object())

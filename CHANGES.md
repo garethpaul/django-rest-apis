@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-15
+
+- Rejected noncanonical Twitter timeline screen names before template rendering.
+
 ## 2026-06-14
 
 - Added an exact-head Django runtime verification matrix that separates

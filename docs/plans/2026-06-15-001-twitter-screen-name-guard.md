@@ -1,6 +1,6 @@
 # Twitter Timeline Screen-Name Guard
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -42,4 +42,14 @@ boundary.
 
 ## Verification
 
-Pending implementation and bounded validation.
+- The dependency-free view helper suite passed all 27 cases, including direct
+  canonical acceptance, malformed-value rejection, and complete-timeline
+  rejection for a path-like provider name.
+- Seven hostile mutations were rejected for a widened alphabet, an overlong
+  limit, bypassed validation, missing helper or loader regressions,
+  documentation drift, and reopened plan status.
+- `make check` passed under Python 3.12.8 and Python 3.14.0 in both an isolated
+  copy and the final worktree; the Python 3.12 gate also passed when invoked
+  from an external working directory.
+- This change claims no live Django, database, OAuth, browser, or Twitter
+  provider execution.

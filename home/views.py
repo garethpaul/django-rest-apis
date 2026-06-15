@@ -5,9 +5,11 @@ from django.core.exceptions import ImproperlyConfigured
 from django.views.decorators.http import require_POST
 
 from social.apps.django_app.default.models import UserSocialAuth
+import re
 import twitter
 
 MAX_STATUS_LENGTH = 280
+TWITTER_SCREEN_NAME_RE = re.compile(r'^[A-Za-z0-9_]{1,15}\Z')
 try:
     STRING_TYPES = (basestring,)
 except NameError:
@@ -39,6 +41,13 @@ def normalize_token(value):
     return value or None
 
 
+def twitter_screen_name_is_valid(value):
+    return (
+        isinstance(value, STRING_TYPES) and
+        TWITTER_SCREEN_NAME_RE.match(value) is not None
+    )
+
+
 def timeline_status_is_renderable(status):
     try:
         status_id = getattr(status, 'id', None)
@@ -51,8 +60,7 @@ def timeline_status_is_renderable(status):
             status_id > 0 and
             isinstance(text, STRING_TYPES) and
             bool(text.strip()) and
-            isinstance(screen_name, STRING_TYPES) and
-            bool(screen_name.strip())
+            twitter_screen_name_is_valid(screen_name)
         )
     except Exception:
         return False

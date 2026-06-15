@@ -35,6 +35,7 @@ Priority:
 - Contain provider-controlled timeline attribute failures before template field
   access
 - Reject blank provider timeline text before template rendering
+- Reject noncanonical provider screen names before template rendering
 - Normalize boolean environment flags before evaluating debug-mode settings
 - Keep production session and CSRF cookies transport-secure
 - Keep GitHub Actions aligned with the local Python `make check` baseline

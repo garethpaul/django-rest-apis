@@ -29,6 +29,7 @@ TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.
 TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.md"
 TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
 TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
+SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-twitter-screen-name-guard.md"
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
@@ -167,6 +168,11 @@ LOAD_TWITTER_HOME=$(awk '
 TIMELINE_STATUS_RENDERABLE=$(awk '
   /^def timeline_status_is_renderable\(/ { capture = 1 }
   capture && /^def / && $0 !~ /^def timeline_status_is_renderable\(/ { exit }
+  capture { print }
+' "$VIEWS")
+TWITTER_SCREEN_NAME_VALID=$(awk '
+  /^def twitter_screen_name_is_valid\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def twitter_screen_name_is_valid\(/ { exit }
   capture { print }
 ' "$VIEWS")
 
@@ -594,8 +600,7 @@ fi
 if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_id, INTEGER_TYPES)" ||
   ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "not isinstance(status_id, bool)" ||
   ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(text, STRING_TYPES)" ||
-  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(screen_name, STRING_TYPES)" ||
-  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "bool(screen_name.strip())" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "twitter_screen_name_is_valid(screen_name)" ||
   ! printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fq "elif not all(timeline_status_is_renderable(item) for item in statuses):" ||
   ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
     /if not isinstance\(statuses, \(list, tuple\)\):/ { type_guard = NR }
@@ -606,6 +611,31 @@ if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_i
   ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_items" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_item" "$VIEW_TESTS"; then
   printf '%s\n' "Twitter timeline items must retain the tested template-field boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "TWITTER_SCREEN_NAME_RE = re.compile(r'^[A-Za-z0-9_]{1,15}\\Z')" "$VIEWS" || \
+   ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "isinstance(value, STRING_TYPES)" || \
+   ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "TWITTER_SCREEN_NAME_RE.match(value) is not None" || \
+   ! grep -Fq "test_twitter_screen_name_accepts_canonical_values" "$VIEW_TESTS" || \
+   ! grep -Fq "test_twitter_screen_name_rejects_noncanonical_values" "$VIEW_TESTS" || \
+   ! grep -Fq "test_load_twitter_home_rejects_path_like_screen_name" "$VIEW_TESTS" || \
+   [ "$(grep -Fc 'sample/user' "$VIEW_TESTS")" -ne 2 ]; then
+  printf '%s\n' "Twitter timeline screen names must retain canonical helper and complete-timeline coverage." >&2
+  exit 1
+fi
+if [ ! -f "$SCREEN_NAME_PLAN" ] || \
+   ! grep -Fq 'Status: Completed' "$SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'make check' "$SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'hostile mutations' "$SCREEN_NAME_PLAN"; then
+  printf '%s\n' "Twitter screen-name guard plan must record completed verification." >&2
+  exit 1
+fi
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'screen names are restricted to 1-15 ASCII letters, digits, or underscores before template rendering' || \
+   ! tr '\n' ' ' < "$ROOT_DIR/SECURITY.md" | tr -s '[:space:]' ' ' | grep -Fq 'Twitter timeline screen names must contain only 1-15 ASCII letters, digits, or underscores' || \
+   ! grep -Fq 'Rejected noncanonical Twitter timeline screen names before template rendering' "$ROOT_DIR/CHANGES.md" || \
+   ! grep -Fq 'Reject noncanonical provider screen names before template rendering' "$VISION"; then
+  printf '%s\n' "Twitter timeline screen-name guard documentation is incomplete." >&2
   exit 1
 fi
 
