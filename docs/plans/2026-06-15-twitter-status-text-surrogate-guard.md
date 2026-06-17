@@ -77,4 +77,10 @@ for the provider request before invoking the provider client.
 - Shell syntax, Python compilation, exact diff, generated-artifact,
   dependency/workflow/template-drift, conflict-marker, whitespace, and secret
   audits passed before commit.
+- The implementation was committed as
+  `f1c6886b97c59fcb8d54ac966691adec00d3b95d`.
+- Canonical hosted verification passed on that exact implementation head:
+  push run `27567084975` and pull-request run `27567095220` each completed
+  successfully across Python 3.10, 3.12, and 3.14. PR #19 remained open,
+  clean, and mergeable, and the branch had no open code-scanning alerts.
 - No live Django, database, OAuth, browser, or Twitter execution was performed.

@@ -1007,6 +1007,9 @@ for status_text_surrogate_contract in \
   "Status: Completed" \
   "repository-root and external-directory \`make check\` passed" \
   "hostile mutations" \
+  "f1c6886b97c59fcb8d54ac966691adec00d3b95d" \
+  'push run `27567084975`' \
+  'pull-request run `27567095220`' \
   "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
   if ! grep -Fq "$status_text_surrogate_contract" "$STATUS_TEXT_SURROGATE_PLAN"; then
     printf '%s\n' "Twitter status surrogate plan must record completed evidence: $status_text_surrogate_contract" >&2
