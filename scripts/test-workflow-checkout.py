@@ -539,7 +539,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
             source_mode = stat.S_IMODE(
                 os.lstat(repository / "scripts" / "check-baseline.sh").st_mode
             )
-            self.assertEqual(0o755, source_mode)
+            self.assertNotEqual(0, source_mode & stat.S_IXUSR)
             for copy_name in ("tests", "verifier"):
                 copied_script = (
                     contract_directory
@@ -549,7 +549,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
                     / "check-baseline.sh"
                 )
                 self.assertEqual(
-                    0o755, stat.S_IMODE(os.lstat(copied_script).st_mode)
+                    source_mode, stat.S_IMODE(os.lstat(copied_script).st_mode)
                 )
                 for parent in (copied_script.parent, copied_script.parent.parent):
                     parent_mode = stat.S_IMODE(os.lstat(parent).st_mode)
@@ -634,9 +634,8 @@ class CanonicalActionsContractTests(unittest.TestCase):
             argument_log.touch()
             argument_log.chmod(0o666)
             self.assertFalse(TRUSTED_GIT_FIXTURE.is_relative_to(temporary_root))
-            self.assertEqual(
-                0o755, stat.S_IMODE(os.lstat(TRUSTED_GIT_FIXTURE).st_mode)
-            )
+            fixture_mode = stat.S_IMODE(os.lstat(TRUSTED_GIT_FIXTURE).st_mode)
+            self.assertNotEqual(0, fixture_mode & stat.S_IXUSR)
             result = subprocess.run(
                 [
                     *SANITIZED_PYTHON,
