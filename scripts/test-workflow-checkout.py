@@ -587,13 +587,16 @@ class CanonicalActionsContractTests(unittest.TestCase):
 
     def test_prepare_uses_command_local_safe_directory_for_every_git_call(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            repository = Path(temporary_directory) / "repository"
+            temporary_root = Path(temporary_directory)
+            temporary_root.chmod(0o755)
+            repository = temporary_root / "repository"
             shutil.copytree(
                 ROOT,
                 repository,
                 ignore=shutil.ignore_patterns(".git", "__pycache__"),
                 copy_function=shutil.copy2,
             )
+            repository.chmod(0o755)
             subprocess.run(["git", "init", "-q", str(repository)], check=True)
             subprocess.run(["git", "-C", str(repository), "add", "--all"], check=True)
             subprocess.run(
@@ -611,8 +614,10 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 ],
                 check=True,
             )
-            argument_log = Path(temporary_directory) / "git-arguments.log"
-            trusted_git = Path(temporary_directory) / "trusted-git"
+            argument_log = temporary_root / "git-arguments.log"
+            argument_log.touch()
+            argument_log.chmod(0o666)
+            trusted_git = temporary_root / "trusted-git"
             trusted_git.write_text(
                 "#!/bin/sh\n"
                 "printf '%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" >> \"$GIT_ARGUMENT_LOG\"\n"
@@ -626,7 +631,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
                     str(CHECKER),
                     "prepare",
                     str(repository),
-                    str(Path(temporary_directory) / "contract"),
+                    str(temporary_root / "contract"),
                 ],
                 check=False,
                 capture_output=True,
