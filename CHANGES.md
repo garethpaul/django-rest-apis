@@ -15,6 +15,28 @@
 
 - Stopped GitHub Actions checkout credential persistence and added an exact
   workflow contract for the single pinned checkout step.
+- Replaced semantic workflow scanning with exact workflow and local-action
+  path/SHA-256 manifests plus hostile inventory, byte, and wiring mutations.
+- Bound the reviewed Makefile bytes into the canonical contract, made the
+  Python interpreter non-overridable, and run the checker plus its independent
+  mutation suite before the hosted `make check` step.
+- Switched workflow and local-action inventory traversal to recursive,
+  no-follow `lstat` validation so nested symlinks and non-regular entries fail.
+- Isolated all Python contract processes with sanitized startup state, replaced
+  `hashlib` with the built-in OpenSSL SHA-256 primitive, and run mutation tests
+  from an exact disposable copy of a clean tracked-tree snapshot.
+- Revalidate the protected source tree before and after explicit
+  `make -f Makefile`, rejecting Make environment injection and every
+  `GNUmakefile` or lowercase `makefile` shadow path.
+- Moved candidate tests and Make into locked-down read-only containers that
+  cannot mount the source, verifier, snapshot, or host tool paths; verifier
+  containers receive only read-only source/snapshot/verifier mounts.
+- Resolve and verify absolute root-owned host executables before candidate code,
+  sanitize `PATH`, snapshot tracked files/index/tree, and reject
+  `GNUMAKEFLAGS` alongside all other Make-control variables.
+- Preserve exact tracked permission modes in both prepared copies and validate
+  byte/mode equality before any container runs; fail preparation if the
+  directly executed baseline loses its executable bit.
 - Contained expected python-twitter posting and timeline failures so the home
   page renders stable generic messages instead of returning an internal error.
 - Preserved available timeline results when a status post fails and added
