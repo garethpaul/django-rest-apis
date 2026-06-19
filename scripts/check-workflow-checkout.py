@@ -397,7 +397,10 @@ def main(arguments):
         repository = Path(arguments[2]).resolve()
         error = verify_snapshot(repository, Path(arguments[3]).resolve())
     elif len(arguments) >= 3 and arguments[1] == "tools":
-        error = validate_trusted_tools(arguments[2:])
+        if validate_trusted_tools(arguments[2:]):
+            print("Trusted executable validation failed.", file=sys.stderr)
+            return 1
+        error = None
     else:
         print(
             "Usage: check-workflow-checkout.py [REPOSITORY_ROOT] | "

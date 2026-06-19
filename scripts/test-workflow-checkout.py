@@ -715,10 +715,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
             )
         self.assertNotEqual(0, result.returncode)
         self.assertNotIn(str(fake), result.stderr)
-        self.assertTrue(
-            "root-owned and immutable" in result.stderr
-            or "resolved path" in result.stderr
-        )
+        self.assertIn("Trusted executable validation failed", result.stderr)
 
         system_python = Path(sys.executable).resolve()
         if system_python != Path(sys.executable):
@@ -729,7 +726,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 text=True,
             )
             self.assertNotEqual(0, result.returncode)
-            self.assertIn("resolved path", result.stderr)
+            self.assertIn("Trusted executable validation failed", result.stderr)
 
     def test_candidate_timing_mutation_has_no_source_or_verifier_mount(self):
         workflow = CANONICAL_WORKFLOW.read_text(encoding="utf-8")
