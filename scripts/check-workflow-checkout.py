@@ -225,8 +225,16 @@ def run_git(repository, arguments):
     git = os.environ.get("TRUSTED_GIT")
     if not git or not Path(git).is_absolute():
         raise ValueError("TRUSTED_GIT must name a verified absolute executable.")
+    repository_path = str(repository)
     result = subprocess.run(
-        [git, "-C", str(repository), *arguments],
+        [
+            git,
+            "-c",
+            "safe.directory={}".format(repository_path),
+            "-C",
+            repository_path,
+            *arguments,
+        ],
         check=False,
         capture_output=True,
     )

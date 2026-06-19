@@ -585,6 +585,71 @@ class CanonicalActionsContractTests(unittest.TestCase):
             self.assertNotEqual(0, result.returncode)
             self.assertIn("executable mode", result.stderr)
 
+    def test_prepare_uses_command_local_safe_directory_for_every_git_call(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository = Path(temporary_directory) / "repository"
+            shutil.copytree(
+                ROOT,
+                repository,
+                ignore=shutil.ignore_patterns(".git", "__pycache__"),
+                copy_function=shutil.copy2,
+            )
+            subprocess.run(["git", "init", "-q", str(repository)], check=True)
+            subprocess.run(["git", "-C", str(repository), "add", "--all"], check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "-c",
+                    "user.name=Contract Test",
+                    "-c",
+                    "user.email=contract@example.invalid",
+                    "commit",
+                    "-qm",
+                    "snapshot",
+                ],
+                check=True,
+            )
+            argument_log = Path(temporary_directory) / "git-arguments.log"
+            trusted_git = Path(temporary_directory) / "trusted-git"
+            trusted_git.write_text(
+                "#!/bin/sh\n"
+                "printf '%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" >> \"$GIT_ARGUMENT_LOG\"\n"
+                "exec /usr/bin/git \"$@\"\n",
+                encoding="utf-8",
+            )
+            trusted_git.chmod(0o755)
+            result = subprocess.run(
+                [
+                    *SANITIZED_PYTHON,
+                    str(CHECKER),
+                    "prepare",
+                    str(repository),
+                    str(Path(temporary_directory) / "contract"),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env={
+                    **os.environ,
+                    "GIT_ARGUMENT_LOG": str(argument_log),
+                    "TRUSTED_GIT": str(trusted_git),
+                },
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            arguments = argument_log.read_text(encoding="utf-8").splitlines()
+            self.assertGreaterEqual(len(arguments), 16)
+            normalized_repository = repository.resolve()
+            expected_prefix = [
+                "-c",
+                "safe.directory={}".format(normalized_repository),
+                "-C",
+                str(normalized_repository),
+            ]
+            for offset in range(0, len(arguments), 4):
+                self.assertEqual(expected_prefix, arguments[offset : offset + 4])
+
     def test_rejects_make_shadow_files_includes_and_makefiles_environment(self):
         shadow_paths = ("GNUmakefile", "nested/GNUmakefile", "nested/makefile")
         for relative in shadow_paths:
