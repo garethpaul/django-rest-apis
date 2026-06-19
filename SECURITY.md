@@ -46,11 +46,35 @@ Provider-controlled attribute failures must use the same generic empty state
 without exposing the exception or rendering a partial result.
 Production settings must always mark session and CSRF cookies secure; local
 debug mode may opt in when it is served over HTTPS.
-GitHub Actions runs isolated `make check` coverage on Python 3.10, 3.12, and
-3.14 with commit-pinned actions, read-only repository access, and bounded
-execution. CI deliberately does not install the unsupported Django 1.6-era
-dependency set and does not persist checkout credentials after source
-retrieval.
+GitHub Actions resolves and verifies absolute root-owned host tools, then runs
+the canonical checker and independent mutation tests in separate read-only
+containers before explicit absolute `make -f Makefile` coverage
+on Python 3.10, 3.12, and 3.14 with commit-pinned
+actions, read-only repository access, and bounded execution. CI deliberately
+does not install the unsupported Django 1.6-era dependency set and does not persist checkout credentials
+after source retrieval. The checker freezes the
+complete reviewed workflow and Makefile bytes. It also uses recursive no-follow
+`lstat` traversal to enforce exact path/type inventories under
+`.github/workflows` and `.github/actions`, rejecting every symlink and
+non-regular entry; the current local-action inventory is empty and its root is
+absent. `PYTHON` is
+non-overridable in the reviewed Makefile. Any legitimate workflow,
+local-action, or Makefile change requires a reviewed canonical contract update
+in both checker and independent tests before it can pass verification.
+The hosted integrity step requires a clean tracked tree and snapshots exact file
+blobs and permission modes, index entries, and committed tree identity. Both
+prepared copies are byte/mode validated, and the directly executed baseline
+must retain its executable bit. Candidate tests receive only
+a read-only test copy in a non-root, no-network, capability-free container and
+cannot access the source, verifier, snapshot, or host tools. Separate verifier
+containers use read-only mounts to validate source state before and after the
+Make container. Python startup paths/user site and GNU Make environment inputs,
+including `GNUMAKEFLAGS`, are removed. `GNUmakefile`, lowercase `makefile`, includes introduced by changing
+the canonical Makefile, and alternate Make roots are rejected or bypassed by
+the explicit absolute `-C`/`-f` invocation.
+The Python matrix validates dependency-free source contracts; it is not
+evidence that the historical Django runtime is compatible with those Python
+releases or free from known dependency vulnerabilities.
 
 ## Dependency and Supply Chain Security
 
