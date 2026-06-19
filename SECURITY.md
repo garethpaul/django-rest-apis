@@ -24,6 +24,10 @@ Helpful reports include:
 
 ## Project Security Posture
 
+- The preserved dependency range resolves to Django 1.6.11, for which the
+  direct dependency audit reports **18 known vulnerabilities**. This repository
+  is archival and unsuitable for live deployment. Source/helper gates do not
+  make the runtime audit-clean or production-safe.
 - This repository appears to be a Python web API or service project. The active security scope is the code and documentation on the default branch.
 - Review found authentication, token, or session-related code paths; changes in those areas should receive security-focused review before merge.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
@@ -38,12 +42,15 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this Django sample, missing Twitter access tokens should fail with an explicit Django configuration error before an API client is constructed.
 Expected Twitter API errors should render stable generic messages and must not
 expose raw provider exception details to authenticated users.
+Transport-level provider I/O failures must use the same contained error path.
 Unencodable user-authored Twitter status text must be rejected before provider
 writes so request encoding failures do not escape the view boundary.
 Malformed successful Twitter timeline results must use the same generic empty
 state instead of passing incompatible provider data into template rendering.
 Malformed successful Twitter timeline items must also reject the complete
 timeline before missing IDs, text, users, or screen names reach the template.
+Validated timeline values must be copied into inert render data so templates
+cannot re-read mutable or exception-raising provider accessors.
 Twitter timeline screen names must contain only 1-15 ASCII letters, digits, or
 underscores before they are interpolated into provider status URLs.
 Timeline request screen names must be canonical before provider I/O; malformed
@@ -88,7 +95,8 @@ the canonical Makefile, and alternate Make roots are rejected or bypassed by
 the explicit absolute `-C`/`-f` invocation.
 The Python matrix validates dependency-free source contracts; it is not
 evidence that the historical Django runtime is compatible with those Python
-releases or free from known dependency vulnerabilities.
+releases or free from known dependency vulnerabilities. The direct audit is
+explicitly not clean: Django 1.6.11 has 18 known vulnerabilities.
 
 ## Dependency and Supply Chain Security
 

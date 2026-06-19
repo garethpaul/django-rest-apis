@@ -23,7 +23,7 @@ except NameError:
 
 
 def normalize_status(status):
-    if status is None or not isinstance(status, STRING_TYPES):
+    if status is None or type(status) not in STRING_TYPES:
         return None
     status = status.strip()
     if (
@@ -38,7 +38,7 @@ def normalize_status(status):
 def normalize_token(value):
     if value is None:
         return None
-    if not isinstance(value, STRING_TYPES):
+    if type(value) not in STRING_TYPES:
         return None
     try:
         value = value.strip()
@@ -49,13 +49,13 @@ def normalize_token(value):
 
 def twitter_screen_name_is_valid(value):
     return (
-        isinstance(value, STRING_TYPES) and
+        type(value) in STRING_TYPES and
         TWITTER_SCREEN_NAME_RE.match(value) is not None
     )
 
 
 def twitter_text_is_utf8_encodable(value):
-    if not isinstance(value, STRING_TYPES):
+    if type(value) not in STRING_TYPES:
         return False
     try:
         value.encode('utf-8')
@@ -64,25 +64,34 @@ def twitter_text_is_utf8_encodable(value):
     return True
 
 
-def timeline_status_is_renderable(status):
+def normalize_timeline_status(status):
     try:
         status_id = getattr(status, 'id', None)
         text = getattr(status, 'text', None)
         user = getattr(status, 'user', None)
         screen_name = getattr(user, 'screen_name', None)
-        return (
-            isinstance(status_id, INTEGER_TYPES) and
-            not isinstance(status_id, bool) and
+        if not (
+            type(status_id) in INTEGER_TYPES and
             status_id > 0 and
             status_id <= MAX_TWITTER_STATUS_ID and
-            isinstance(text, STRING_TYPES) and
+            type(text) in STRING_TYPES and
             bool(text.strip()) and
             len(text) <= MAX_STATUS_LENGTH and
             twitter_text_is_utf8_encodable(text) and
             twitter_screen_name_is_valid(screen_name)
-        )
+        ):
+            return None
+        return {
+            'id': status_id,
+            'text': text,
+            'screen_name': screen_name,
+        }
     except Exception:
-        return False
+        return None
+
+
+def timeline_status_is_renderable(status):
+    return normalize_timeline_status(status) is not None
 
 
 def load_twitter_home(api, username, status):
@@ -91,7 +100,7 @@ def load_twitter_home(api, username, status):
         try:
             api.PostUpdates(status)
             return [], None, True
-        except twitter.TwitterError:
+        except (twitter.TwitterError, IOError, OSError):
             error = 'Twitter could not post the status right now.'
 
     if not twitter_screen_name_is_valid(username):
@@ -103,12 +112,12 @@ def load_twitter_home(api, username, status):
         statuses = api.GetUserTimeline(
             screen_name=username, count=TIMELINE_STATUS_LIMIT
         )
-    except twitter.TwitterError:
+    except (twitter.TwitterError, IOError, OSError):
         statuses = []
         if error is None:
             error = 'Twitter could not load the timeline right now.'
 
-    if not isinstance(statuses, (list, tuple)):
+    if type(statuses) not in (list, tuple):
         statuses = []
         if error is None:
             error = 'Twitter could not load the timeline right now.'
@@ -116,10 +125,18 @@ def load_twitter_home(api, username, status):
         statuses = []
         if error is None:
             error = 'Twitter could not load the timeline right now.'
-    elif not all(timeline_status_is_renderable(item) for item in statuses):
-        statuses = []
-        if error is None:
-            error = 'Twitter could not load the timeline right now.'
+    else:
+        normalized_statuses = []
+        for item in statuses:
+            normalized_status = normalize_timeline_status(item)
+            if normalized_status is None:
+                statuses = []
+                if error is None:
+                    error = 'Twitter could not load the timeline right now.'
+                break
+            normalized_statuses.append(normalized_status)
+        else:
+            statuses = normalized_statuses
 
     return statuses, error, False
 
@@ -168,11 +185,17 @@ def get_twitter(user):
         usa = None
 
     if usa:
-        extra_data = getattr(usa, 'extra_data', {}) or {}
-        access_token = extra_data.get('access_token') if isinstance(extra_data, dict) else None
-        if isinstance(access_token, dict):
-            access_token_key = normalize_token(access_token.get('oauth_token')) or access_token_key
-            access_token_secret = normalize_token(access_token.get('oauth_token_secret')) or access_token_secret
+        try:
+            extra_data = getattr(usa, 'extra_data', {}) or {}
+            access_token = extra_data.get('access_token') if type(extra_data) is dict else None
+            if type(access_token) is dict:
+                social_token_key = normalize_token(access_token.get('oauth_token'))
+                social_token_secret = normalize_token(access_token.get('oauth_token_secret'))
+                if social_token_key and social_token_secret:
+                    access_token_key = social_token_key
+                    access_token_secret = social_token_secret
+        except Exception:
+            pass
 
     if not access_token_key or not access_token_secret:
         raise ImproperlyConfigured('Twitter access token and secret must be configured in social-auth or the environment.')

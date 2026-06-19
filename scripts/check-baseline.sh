@@ -186,8 +186,8 @@ LOAD_TWITTER_HOME=$(awk '
   capture { print }
 ' "$VIEWS")
 TIMELINE_STATUS_RENDERABLE=$(awk '
-  /^def timeline_status_is_renderable\(/ { capture = 1 }
-  capture && /^def / && $0 !~ /^def timeline_status_is_renderable\(/ { exit }
+  /^def normalize_timeline_status\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def normalize_timeline_status\(/ { exit }
   capture { print }
 ' "$VIEWS")
 TWITTER_SCREEN_NAME_VALID=$(awk '
@@ -222,8 +222,25 @@ if grep -Fq ')e-_u9#$xfu5(uw!izbq!yu+dtf1*ce5@7w42p^ro*i-+)$yy%' "$SETTINGS"; th
   exit 1
 fi
 
+if ! grep -Fq "Django 1.6.11" "$README" ||
+  ! grep -Fq "18 known vulnerabilities" "$README" ||
+  ! grep -Fq "unsuitable for live deployment" "$README" ||
+  ! grep -Fq "18 known vulnerabilities" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "unsuitable for live deployment" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "Project guidance must retain the explicit unsafe dependency posture." >&2
+  exit 1
+fi
+
 if ! grep -Fq "DJANGO_SECRET_KEY" "$SETTINGS" || ! grep -Fq "DJANGO_DEBUG" "$SETTINGS"; then
   printf '%s\n' "Django SECRET_KEY and DEBUG must be controlled by environment variables." >&2
+  exit 1
+fi
+
+if grep -Fq "django-rest-apis-local-development-key" "$SETTINGS" ||
+  ! grep -Fq "not SECRET_KEY or not SECRET_KEY.strip()" "$SETTINGS" ||
+  ! grep -Fq "test_debug_mode_requires_secret_key" "$ROOT_DIR/scripts/test-settings-helpers.py" ||
+  ! grep -Fq "test_whitespace_secret_key_is_rejected" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
+  printf '%s\n' "Django must require a non-blank configured SECRET_KEY in every mode." >&2
   exit 1
 fi
 
@@ -276,7 +293,7 @@ if ! grep -Fq "def normalize_status" "$VIEWS" || ! grep -Fq "MAX_STATUS_LENGTH =
   exit 1
 fi
 
-if ! grep -Fq "not isinstance(status, STRING_TYPES)" "$VIEWS" ||
+if ! grep -Fq "type(status) not in STRING_TYPES" "$VIEWS" ||
   ! grep -Fq "test_normalize_status_ignores_non_string_values" "$VIEW_TESTS" ||
   ! grep -Fq "test_home_does_not_post_non_string_status" "$VIEW_TESTS" ||
   ! grep -Fq "malformed status must not reach Twitter" "$VIEW_TESTS"; then
@@ -558,37 +575,41 @@ if ! grep -Fq "test_normalize_status_ignores_overlong_text" "$VIEW_TESTS"; then
 fi
 
 if ! grep -Fq "def load_twitter_home" "$VIEWS" ||
-  [ "$(grep -Fc 'except twitter.TwitterError' "$VIEWS")" -lt 2 ] ||
+  [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc 'except (twitter.TwitterError, IOError, OSError):')" -lt 2 ] ||
   ! grep -Fq "test_load_twitter_home_preserves_timeline_when_post_fails" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_returns_stable_error_when_timeline_fails" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_contains_post_timeouts" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_contains_timeline_timeouts" "$VIEW_TESTS" ||
   ! grep -Fq "twitter_error" "$HOME_TEMPLATE"; then
   printf '%s\n' "Twitter API failures must render stable view errors with helper coverage." >&2
   exit 1
 fi
 
-if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc "if not isinstance(statuses, (list, tuple)):")" -ne 1 ] ||
+if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc "if type(statuses) not in (list, tuple):")" -ne 1 ] ||
   ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
     /statuses = api.GetUserTimeline\(/ { request = NR }
-    /if not isinstance\(statuses, \(list, tuple\)\):/ { guard = NR }
+    /if type\(statuses\) not in \(list, tuple\):/ { guard = NR }
     END { exit request && guard > request ? 0 : 1 }
   ' ||
   ! grep -Fq "test_load_twitter_home_accepts_tuple_timeline" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_list_subclasses_without_invoking_them" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_results" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_timeline" "$VIEW_TESTS"; then
   printf '%s\n' "Twitter timeline results must retain the tested list-or-tuple type boundary." >&2
   exit 1
 fi
 
-if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_id, INTEGER_TYPES)" ||
-  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "not isinstance(status_id, bool)" ||
-  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(text, STRING_TYPES)" ||
+if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "type(status_id) in INTEGER_TYPES" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "type(text) in STRING_TYPES" ||
   ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "twitter_screen_name_is_valid(screen_name)" ||
-  ! printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fq "elif not all(timeline_status_is_renderable(item) for item in statuses):" ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fq "normalized_status = normalize_timeline_status(item)" ||
   ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
-    /if not isinstance\(statuses, \(list, tuple\)\):/ { type_guard = NR }
-    /elif not all\(timeline_status_is_renderable\(item\) for item in statuses\):/ { item_guard = NR }
+    /if type\(statuses\) not in \(list, tuple\):/ { type_guard = NR }
+    /normalized_status = normalize_timeline_status\(item\)/ { item_guard = NR }
     END { exit type_guard && item_guard > type_guard ? 0 : 1 }
   ' ||
+  ! grep -Fq "test_timeline_status_rejects_integer_subclasses" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_snapshots_provider_accessors_once" "$VIEW_TESTS" ||
   ! grep -Fq "test_timeline_status_requires_template_fields" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_items" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_item" "$VIEW_TESTS"; then
@@ -597,7 +618,7 @@ if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "isinstance(status_i
 fi
 
 if ! grep -Fq "TWITTER_SCREEN_NAME_RE = re.compile(r'^[A-Za-z0-9_]{1,15}\\Z')" "$VIEWS" || \
-   ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "isinstance(value, STRING_TYPES)" || \
+   ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "type(value) in STRING_TYPES" || \
    ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "TWITTER_SCREEN_NAME_RE.match(value) is not None" || \
    ! grep -Fq "test_twitter_screen_name_accepts_canonical_values" "$VIEW_TESTS" || \
    ! grep -Fq "test_twitter_screen_name_rejects_noncanonical_values" "$VIEW_TESTS" || \
@@ -675,7 +696,7 @@ if [ "$(printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fc "except Exception
     /status_id = getattr\(status, .id., None\)/ { status_read = NR }
     /screen_name = getattr\(user, .screen_name., None\)/ { user_read = NR }
     /except Exception:/ { rescue = NR }
-    /return False/ { rejected = NR }
+    /return None/ { rejected = NR }
     END { exit guard && status_read > guard && user_read > status_read && rescue > user_read && rejected > rescue ? 0 : 1 }
   ' ||
   ! grep -Fq "class RaisingStatus:" "$VIEW_TESTS" ||
@@ -693,6 +714,14 @@ if ! grep -Fq "return [], None, True" "$VIEWS" ||
   ! grep -Fq "test_home_redirects_after_successful_status_post" "$VIEW_TESTS" ||
   ! grep -Fq "test_home_renders_timeline_when_status_post_fails" "$VIEW_TESTS"; then
   printf '%s\n' "Successful Twitter posts must use the tested POST/Redirect/GET path." >&2
+  exit 1
+fi
+
+if ! grep -Fq '{{s.screen_name}}' "$HOME_TEMPLATE" ||
+  grep -Fq '{{s.user.screen_name}}' "$HOME_TEMPLATE" ||
+  grep -Fq '|safe' "$HOME_TEMPLATE" ||
+  ! grep -Fq "test_load_twitter_home_snapshots_provider_accessors_once" "$VIEW_TESTS"; then
+  printf '%s\n' "Timeline rendering must use inert validated fields with Django autoescaping." >&2
   exit 1
 fi
 
@@ -745,9 +774,11 @@ if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_mal
   exit 1
 fi
 
-if ! grep -Fq "access_token = extra_data.get('access_token') if isinstance(extra_data, dict) else None" "$VIEWS" ||
+if ! grep -Fq "access_token = extra_data.get('access_token') if type(extra_data) is dict else None" "$VIEWS" ||
   ! grep -Fq "test_get_twitter_uses_environment_tokens_when_extra_data_is_string" "$VIEW_TESTS" ||
   ! grep -Fq "test_get_twitter_uses_environment_tokens_when_extra_data_is_list" "$VIEW_TESTS" ||
+  ! grep -Fq "test_get_twitter_does_not_mix_partial_social_and_environment_tokens" "$VIEW_TESTS" ||
+  ! grep -Fq "test_get_twitter_contains_social_metadata_accessor_failures" "$VIEW_TESTS" ||
   ! grep -Fq "assert_environment_tokens_for_extra_data" "$VIEW_TESTS"; then
   printf '%s\n' "Malformed social-auth metadata must preserve environment-token fallback." >&2
   exit 1
@@ -838,7 +869,7 @@ if ! grep -Fq "def normalize_token" "$VIEWS"; then
   exit 1
 fi
 
-if ! grep -Fq "STRING_TYPES" "$VIEWS" || ! grep -Fq "not isinstance(value, STRING_TYPES)" "$VIEWS"; then
+if ! grep -Fq "STRING_TYPES" "$VIEWS" || ! grep -Fq "type(value) not in STRING_TYPES" "$VIEWS"; then
   printf '%s\n' "get_twitter must ignore malformed non-string credential values." >&2
   exit 1
 fi

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-06-19
+
+- Required a non-blank configured `DJANGO_SECRET_KEY` in debug and production,
+  removing the reusable committed development fallback.
+- Kept saved social-auth access-token key/secret pairs atomic so malformed
+  partial metadata cannot be combined with an unrelated environment token.
+- Contained provider transport I/O failures behind stable user-facing errors.
+- Rejected executable collection/scalar subclasses at provider boundaries and
+  copied accepted timeline fields into inert dictionaries before rendering.
+- Recorded that Django 1.6.11 has 18 known vulnerabilities and that this
+  archival repository is unsuitable for live deployment.
+
 ## 2026-06-15
 
 - Rejected lone-surrogate status text before provider writes while preserving

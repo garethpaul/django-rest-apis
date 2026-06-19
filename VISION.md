@@ -19,6 +19,7 @@ Priority:
 
 - Keep the Twitter OAuth flow and REST API examples understandable
 - Avoid committing Twitter keys, access tokens, or local settings secrets
+- Require a non-blank Django secret in every mode
 - Preserve the documented legacy setup for Django, south, Fabric, and python-twitter
 - Keep account-changing actions behind POST and CSRF protection
 - Redirect after successful status posts so browser refreshes cannot resubmit
@@ -29,12 +30,15 @@ Priority:
 - Ignore blank saved social-auth tokens so environment fallbacks remain usable
 - Ignore malformed saved social-auth tokens so environment fallbacks remain usable
 - Ignore non-mapping saved social-auth metadata so environment fallbacks remain usable
+- Never combine one saved social-auth credential with the other environment credential
 - Fail clearly when Twitter access tokens are absent
 - Contain expected Twitter API failures without exposing provider details
+- Contain transport-level Twitter I/O failures without exposing provider details
 - Reject malformed Twitter timeline result types before template rendering
 - Reject malformed Twitter timeline items before template field access
 - Contain provider-controlled timeline attribute failures before template field
   access
+- Snapshot accepted provider timeline fields into inert render data
 - Reject blank provider timeline text before template rendering
 - Reject noncanonical provider screen names before template rendering
 - Reject noncanonical timeline request names before provider I/O
@@ -83,6 +87,7 @@ OAuth callback and REST behavior should avoid logging tokens or user data.
 - Broad Django upgrades bundled with unrelated feature work
 - API calls that log or expose user tokens
 - Setup changes that leave the sample impossible to run from docs
+- Claims that the Django 1.6.11 dependency stack is audit-clean or suitable for live deployment
 
 This list is a roadmap guardrail, not a permanent rule.
 Strong user demand and strong technical rationale can change it.

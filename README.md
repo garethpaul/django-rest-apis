@@ -58,6 +58,13 @@ migration of Django settings, social authentication, templates, URLs,
 migrations, and deployment tooling. The supported modern verification path is
 the isolated standard-library helper suite behind `make check`.
 
+An exact direct-dependency audit of the preserved upper-bound stack selected
+Django 1.6.11 and reported **18 known vulnerabilities in Django**. This
+repository is therefore unsuitable for live deployment, even with the local
+settings and provider-boundary hardening in place. The helper suite verifies
+repository-owned contracts only; it is not an audit-clean or production-safe
+runtime claim.
+
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
 
 ## Running or Using the Project
@@ -78,7 +85,8 @@ scripts/check-baseline.sh
 `make check` runs the source baseline and no-Django-runtime helper tests from
 the repository root. The guard verifies that `DJANGO_SECRET_KEY`,
 `DJANGO_DEBUG`, and Twitter credential settings are environment-driven and that
-the old hardcoded `SECRET_KEY` is gone. It also runs no-Django-runtime settings
+the old hardcoded `SECRET_KEY` and committed development fallback are gone.
+Every mode requires a non-blank configured secret. It also runs no-Django-runtime settings
 helper tests, checks POST-only status submission, Twitter status normalization,
 rejection of non-string status values before provider writes,
 rejection of lone-surrogate status text before provider writes while valid
@@ -88,8 +96,8 @@ social-auth row fallback, blank social OAuth token fallback, malformed social
 OAuth token fallback, non-mapping social-auth metadata fallback, and pinned
 legacy dependency ranges. It also verifies
 that missing Twitter access tokens fail clearly before constructing the API
-client. Expected Twitter posting and timeline errors are contained at the view
-boundary, with generic messages that do not expose provider details and with
+client. Expected Twitter posting and timeline errors, including transport-level
+I/O failures, are contained at the view boundary, with generic messages that do not expose provider details and with
 available timeline data preserved after posting failures. Successful status
 posts redirect to `/home` before timeline loading so browser refreshes do not
 resubmit the mutation. Valid list and tuple timeline responses remain
@@ -97,7 +105,9 @@ renderable; malformed timeline results become an empty timeline with the same
 generic load error. Within accepted collections, malformed timeline items and
 items whose provider attributes raise during validation reject the complete timeline
 unless every item provides the ID, nonblank text, and user screen name required
-by the template. Provider screen names are restricted to 1-15 ASCII letters,
+by the template. Accepted provider fields are copied into inert dictionaries
+after one validation pass so templates do not re-invoke provider-controlled
+accessors. Provider screen names are restricted to 1-15 ASCII letters,
 digits, or underscores before template rendering, and blank timeline status text
 is rejected before template rendering. Noncanonical local usernames are
 rejected before timeline provider I/O without rewriting the account value.
@@ -158,10 +168,11 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Required environment variables for local app startup are:
-  `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`,
-  `DJANGO_SECURE_COOKIES`,
+  `DJANGO_SECRET_KEY`,
   `SOCIAL_AUTH_TWITTER_KEY`, `SOCIAL_AUTH_TWITTER_SECRET`,
   `TWITTER_ACCESS_TOKEN`, and `TWITTER_ACCESS_TOKEN_SECRET`.
+- Optional controls are `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and
+  `DJANGO_SECURE_COOKIES`.
 
 ## Security and Privacy Notes
 

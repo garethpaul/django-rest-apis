@@ -113,6 +113,14 @@ def make_status(status_id=42, text="existing status", screen_name="sample_user")
     )
 
 
+def make_rendered_status(status_id=42, text="existing status", screen_name="sample_user"):
+    return {
+        "id": status_id,
+        "text": text,
+        "screen_name": screen_name,
+    }
+
+
 class RaisingStatus:
     @property
     def id(self):
@@ -123,6 +131,15 @@ class RaisingUser:
     @property
     def screen_name(self):
         raise RuntimeError("user accessor detail")
+
+
+class RaisingLengthList(list):
+    def __len__(self):
+        raise RuntimeError("timeline length detail")
+
+
+class CustomStatusId(int):
+    pass
 
 
 class ViewHelperTests(unittest.TestCase):
@@ -166,7 +183,7 @@ class ViewHelperTests(unittest.TestCase):
         api = FakeApi()
         statuses, error, posted = views.load_twitter_home(api, "sample_user", "hello")
 
-        self.assertEqual(statuses, [make_status()])
+        self.assertEqual(statuses, [make_rendered_status()])
         self.assertEqual(error, "Twitter could not post the status right now.")
         self.assertFalse(posted)
         self.assertEqual(api.status, "hello")
@@ -185,6 +202,39 @@ class ViewHelperTests(unittest.TestCase):
         self.assertFalse(posted)
         self.assertNotIn("provider detail", error)
 
+    def test_load_twitter_home_contains_post_timeouts(self):
+        class FakeApi:
+            def PostUpdates(self, status):
+                raise IOError("socket timeout detail")
+
+            def GetUserTimeline(self, screen_name, count):
+                return [make_status()]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", "hello"
+        )
+
+        self.assertEqual(statuses, [{
+            "id": 42,
+            "text": "existing status",
+            "screen_name": "sample_user",
+        }])
+        self.assertEqual(error, "Twitter could not post the status right now.")
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_contains_timeline_timeouts(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                raise IOError("socket timeout detail")
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
+
     def test_load_twitter_home_accepts_tuple_timeline(self):
         first_status = make_status(1, "first status")
         second_status = make_status(2, "second status")
@@ -197,9 +247,85 @@ class ViewHelperTests(unittest.TestCase):
             FakeApi(), "sample_user", None
         )
 
-        self.assertEqual(statuses, (first_status, second_status))
+        self.assertEqual(statuses, [
+            make_rendered_status(1, "first status"),
+            make_rendered_status(2, "second status"),
+        ])
         self.assertIsNone(error)
         self.assertFalse(posted)
+
+    def test_load_twitter_home_snapshots_provider_accessors_once(self):
+        class FlippingUser:
+            calls = 0
+
+            @property
+            def screen_name(self):
+                self.calls += 1
+                if self.calls > 1:
+                    raise RuntimeError("screen name read twice")
+                return "sample_user"
+
+        class FlippingStatus:
+            id_calls = 0
+            text_calls = 0
+            user_calls = 0
+
+            @property
+            def id(self):
+                self.id_calls += 1
+                if self.id_calls > 1:
+                    raise RuntimeError("id read twice")
+                return 42
+
+            @property
+            def text(self):
+                self.text_calls += 1
+                if self.text_calls > 1:
+                    raise RuntimeError("text read twice")
+                return "<b>provider text</b>"
+
+            @property
+            def user(self):
+                self.user_calls += 1
+                if self.user_calls > 1:
+                    raise RuntimeError("user read twice")
+                return FlippingUser()
+
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return [FlippingStatus()]
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", None
+        )
+
+        self.assertEqual(statuses, [{
+            "id": 42,
+            "text": "<b>provider text</b>",
+            "screen_name": "sample_user",
+        }])
+        self.assertIsNone(error)
+        self.assertFalse(posted)
+
+    def test_load_twitter_home_rejects_list_subclasses_without_invoking_them(self):
+        class FakeApi:
+            def GetUserTimeline(self, screen_name, count):
+                return RaisingLengthList([make_status()])
+
+        statuses, error, posted = views.load_twitter_home(
+            FakeApi(), "sample_user", None
+        )
+
+        self.assertEqual(statuses, [])
+        self.assertEqual(error, "Twitter could not load the timeline right now.")
+        self.assertFalse(posted)
+
+    def test_timeline_status_rejects_integer_subclasses(self):
+        self.assertFalse(
+            views.timeline_status_is_renderable(
+                make_status(status_id=CustomStatusId(42))
+            )
+        )
 
     def test_load_twitter_home_rejects_noncanonical_request_screen_name(self):
         class FakeApi:
@@ -444,6 +570,7 @@ class ViewHelperTests(unittest.TestCase):
 
     def test_load_twitter_home_accepts_exact_timeline_limit(self):
         expected = [make_status(status_id=index + 1) for index in range(10)]
+        rendered = [make_rendered_status(status_id=index + 1) for index in range(10)]
 
         class FakeApi:
             def GetUserTimeline(self, screen_name, count):
@@ -456,7 +583,7 @@ class ViewHelperTests(unittest.TestCase):
         )
 
         self.assertEqual(api.requested_count, views.TIMELINE_STATUS_LIMIT)
-        self.assertEqual(statuses, expected)
+        self.assertEqual(statuses, rendered)
         self.assertIsNone(error)
         self.assertFalse(posted)
 
@@ -561,7 +688,7 @@ class ViewHelperTests(unittest.TestCase):
 
             args, _kwargs = views.home(request)
             self.assertEqual(args[0], "home.html")
-            self.assertEqual(args[1]["statuses"], [make_status()])
+            self.assertEqual(args[1]["statuses"], [make_rendered_status()])
             self.assertEqual(
                 args[1]["twitter_error"],
                 "Twitter could not post the status right now.",
@@ -586,7 +713,7 @@ class ViewHelperTests(unittest.TestCase):
             )
 
             args, _kwargs = views.home(request)
-            self.assertEqual(args[1]["statuses"], [make_status()])
+            self.assertEqual(args[1]["statuses"], [make_rendered_status()])
             self.assertIsNone(args[1]["twitter_error"])
         finally:
             views.get_twitter = original_get_twitter
@@ -610,7 +737,7 @@ class ViewHelperTests(unittest.TestCase):
                     )
 
                     args, _kwargs = views.home(request)
-                    self.assertEqual(args[1]["statuses"], [make_status()])
+                    self.assertEqual(args[1]["statuses"], [make_rendered_status()])
                     self.assertIsNone(args[1]["twitter_error"])
         finally:
             views.get_twitter = original_get_twitter
@@ -742,6 +869,68 @@ class ViewHelperTests(unittest.TestCase):
             api = views.get_twitter(user)
 
             self.assertIs(api, captured)
+            self.assertEqual(captured["access_token_key"], "access-token")
+            self.assertEqual(captured["access_token_secret"], "access-token-secret")
+        finally:
+            views.UserSocialAuth = original_user_social_auth
+            views.twitter.Api = original_api
+
+    def test_get_twitter_does_not_mix_partial_social_and_environment_tokens(self):
+        captured = {}
+
+        class FakeManager:
+            def get(self, user, provider):
+                return types.SimpleNamespace(extra_data={
+                    "access_token": {
+                        "oauth_token": "user-token",
+                        "oauth_token_secret": "",
+                    }
+                })
+
+        def fake_api(**kwargs):
+            captured.update(kwargs)
+            return captured
+
+        original_user_social_auth = views.UserSocialAuth
+        original_api = views.twitter.Api
+
+        try:
+            views.UserSocialAuth = types.SimpleNamespace(objects=FakeManager())
+            views.twitter.Api = fake_api
+
+            views.get_twitter(types.SimpleNamespace(username="sample-user"))
+
+            self.assertEqual(captured["access_token_key"], "access-token")
+            self.assertEqual(captured["access_token_secret"], "access-token-secret")
+        finally:
+            views.UserSocialAuth = original_user_social_auth
+            views.twitter.Api = original_api
+
+    def test_get_twitter_contains_social_metadata_accessor_failures(self):
+        captured = {}
+
+        class RaisingSocialAuth:
+            @property
+            def extra_data(self):
+                raise RuntimeError("metadata accessor detail")
+
+        class FakeManager:
+            def get(self, user, provider):
+                return RaisingSocialAuth()
+
+        def fake_api(**kwargs):
+            captured.update(kwargs)
+            return captured
+
+        original_user_social_auth = views.UserSocialAuth
+        original_api = views.twitter.Api
+
+        try:
+            views.UserSocialAuth = types.SimpleNamespace(objects=FakeManager())
+            views.twitter.Api = fake_api
+
+            views.get_twitter(types.SimpleNamespace(username="sample-user"))
+
             self.assertEqual(captured["access_token_key"], "access-token")
             self.assertEqual(captured["access_token_secret"], "access-token-secret")
         finally:

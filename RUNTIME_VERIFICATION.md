@@ -10,6 +10,10 @@ Commit: pending implementation commit
 Pull request: pending
 Evidence status: not run
 
+Dependency security status: direct pinned audit selected Django 1.6.11 and
+reported 18 known vulnerabilities. The repository is unsuitable for live
+deployment and no audit-clean claim is made.
+
 | # | Scenario | Boundary | Required sanitized evidence | Status |
 |---|---|---|---|---|
 | 1 | Environment isolation | Local runtime | Python and dependency versions; isolated environment identifier | not run |
@@ -39,4 +43,5 @@ Evidence status: not run
   integration scenario as passed.
 
 No Django server, database migration, browser, OAuth, social-auth provider, or
-live Twitter scenario was executed for this documentation-only change.
+live Twitter scenario was executed for this review. Twitter's legacy API and
+the historical social-auth integration were not exercised with credentials.

@@ -49,12 +49,23 @@ class SettingsHelperTests(unittest.TestCase):
         with self.assertRaises(ImproperlyConfigured):
             load_settings({"DJANGO_DEBUG": "0"})
 
-    def test_debug_mode_allows_local_secret_key_fallback(self):
-        settings = load_settings({"DJANGO_DEBUG": "1"})
+    def test_debug_mode_requires_secret_key(self):
+        with self.assertRaises(ImproperlyConfigured):
+            load_settings({"DJANGO_DEBUG": "1"})
+
+    def test_whitespace_secret_key_is_rejected(self):
+        with self.assertRaises(ImproperlyConfigured):
+            load_settings({"DJANGO_SECRET_KEY": "   \t"})
+
+    def test_debug_mode_uses_configured_secret_key(self):
+        settings = load_settings({
+            "DJANGO_DEBUG": "1",
+            "DJANGO_SECRET_KEY": "debug-secret",
+        })
 
         self.assertTrue(settings.DEBUG)
         self.assertEqual(settings.TEMPLATE_DEBUG, settings.DEBUG)
-        self.assertEqual(settings.SECRET_KEY, "django-rest-apis-local-development-key")
+        self.assertEqual(settings.SECRET_KEY, "debug-secret")
         self.assertFalse(settings.SESSION_COOKIE_SECURE)
         self.assertFalse(settings.CSRF_COOKIE_SECURE)
 
@@ -70,6 +81,7 @@ class SettingsHelperTests(unittest.TestCase):
     def test_debug_https_can_opt_in_to_secure_cookies(self):
         settings = load_settings({
             "DJANGO_DEBUG": "1",
+            "DJANGO_SECRET_KEY": "test-secret",
             "DJANGO_SECURE_COOKIES": " yes ",
         })
 
@@ -87,7 +99,10 @@ class SettingsHelperTests(unittest.TestCase):
         self.assertEqual(settings.ALLOWED_HOSTS, ["example.com", "api.example.com"])
 
     def test_env_bool_strips_and_parses_expected_truthy_values(self):
-        settings = load_settings({"DJANGO_DEBUG": "1"})
+        settings = load_settings({
+            "DJANGO_DEBUG": "1",
+            "DJANGO_SECRET_KEY": "test-secret",
+        })
         original_env = os.environ.copy()
         try:
             for value in ("1", "true", " TRUE ", " yes ", "on"):
