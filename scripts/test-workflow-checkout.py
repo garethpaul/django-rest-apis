@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CHECKER = ROOT / "scripts" / "check-workflow-checkout.py"
 CANONICAL_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 CANONICAL_MAKEFILE = ROOT / "Makefile"
+TRUSTED_GIT_FIXTURE = ROOT / "scripts" / "trusted-git-fixture.sh"
 CANONICAL_WORKFLOW_SHA256 = (
     "f5cdeb4df78224823a02eeade8a74f75dc0110b0dc0b6e75d6577fa09400a2e2"
 )
@@ -617,14 +618,10 @@ class CanonicalActionsContractTests(unittest.TestCase):
             argument_log = temporary_root / "git-arguments.log"
             argument_log.touch()
             argument_log.chmod(0o666)
-            trusted_git = temporary_root / "trusted-git"
-            trusted_git.write_text(
-                "#!/bin/sh\n"
-                "printf '%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" >> \"$GIT_ARGUMENT_LOG\"\n"
-                "exec /usr/bin/git \"$@\"\n",
-                encoding="utf-8",
+            self.assertFalse(TRUSTED_GIT_FIXTURE.is_relative_to(temporary_root))
+            self.assertEqual(
+                0o755, stat.S_IMODE(os.lstat(TRUSTED_GIT_FIXTURE).st_mode)
             )
-            trusted_git.chmod(0o755)
             result = subprocess.run(
                 [
                     *SANITIZED_PYTHON,
@@ -639,7 +636,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 env={
                     **os.environ,
                     "GIT_ARGUMENT_LOG": str(argument_log),
-                    "TRUSTED_GIT": str(trusted_git),
+                    "TRUSTED_GIT": str(TRUSTED_GIT_FIXTURE),
                 },
             )
             self.assertEqual(0, result.returncode, result.stderr)
