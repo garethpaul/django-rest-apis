@@ -20,7 +20,7 @@ CANONICAL_WORKFLOW_SHA256 = (
     "f5cdeb4df78224823a02eeade8a74f75dc0110b0dc0b6e75d6577fa09400a2e2"
 )
 CANONICAL_MAKEFILE_SHA256 = (
-    "eff83ef67a609d2f647f65458e462d239a7ec593d96eff24687d4252a6657e5d"
+    "c1694f641e94095242e900c4aae07f187824c69e705a86e1ee4610cdfc859a9f"
 )
 SANITIZED_PYTHON = (
     "/usr/bin/env",
@@ -34,6 +34,25 @@ SANITIZED_PYTHON = (
     "-I",
     "-S",
 )
+SANITIZED_ENVIRONMENT_VARIABLES = (
+    "PYTHONPATH",
+    "PYTHONHOME",
+    "MAKEFILES",
+    "MAKEFLAGS",
+    "MFLAGS",
+    "GNUMAKEFLAGS",
+)
+
+
+def sanitized_environment(overrides=None):
+    environment = os.environ.copy()
+    for variable in SANITIZED_ENVIRONMENT_VARIABLES:
+        environment.pop(variable, None)
+    environment["PYTHONNOUSERSITE"] = "1"
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    if overrides:
+        environment.update(overrides)
+    return environment
 
 
 REVIEW_BYPASSES = {
@@ -58,19 +77,12 @@ class CanonicalActionsContractTests(unittest.TestCase):
     def run_checker(
         self, repository, expected_returncode, checker=CHECKER, environment=None
     ):
-        sanitized_environment = os.environ.copy()
-        sanitized_environment.pop("PYTHONPATH", None)
-        sanitized_environment.pop("PYTHONHOME", None)
-        sanitized_environment["PYTHONNOUSERSITE"] = "1"
-        sanitized_environment["PYTHONDONTWRITEBYTECODE"] = "1"
-        if environment:
-            sanitized_environment.update(environment)
         result = subprocess.run(
             [*SANITIZED_PYTHON, str(checker), str(repository)],
             check=False,
             capture_output=True,
             text=True,
-            env=sanitized_environment,
+            env=sanitized_environment(environment),
         )
         self.assertEqual(
             expected_returncode,
@@ -306,7 +318,8 @@ class CanonicalActionsContractTests(unittest.TestCase):
             ).replace(
                 "override PYTHON := env -u PYTHONPATH -u PYTHONHOME "
                 "-u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS "
-                "PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 python3 -I -S",
+                "PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 python3 -I -S "
+                "-X pycache_prefix=$${TMPDIR:-/tmp}/django-rest-apis-pycache-$$$$",
                 "PYTHON ?= python3",
             ),
             "line-endings": CANONICAL_MAKEFILE.read_bytes().replace(
@@ -360,9 +373,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
         )
         for command, environment_override in invocations:
             with self.subTest(command=command, environment=environment_override):
-                environment = os.environ.copy()
-                if environment_override:
-                    environment.update(environment_override)
+                environment = sanitized_environment(environment_override)
                 result = subprocess.run(
                     command,
                     check=True,
@@ -433,7 +444,9 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
-                env={**os.environ, "TRUSTED_GIT": str(Path("/usr/bin/git").resolve())},
+                env=sanitized_environment(
+                    {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+                ),
             )
             self.assertEqual(0, prepare.returncode, prepare.stderr)
             copied_makefile = contract_directory / "tests" / "repository" / "Makefile"
@@ -456,7 +469,9 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
-                env={**os.environ, "TRUSTED_GIT": str(Path("/usr/bin/git").resolve())},
+                env=sanitized_environment(
+                    {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+                ),
             )
             self.assertNotEqual(0, verify.returncode)
             (repository / "Makefile").write_bytes(original)
@@ -471,7 +486,9 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
-                env={**os.environ, "TRUSTED_GIT": str(Path("/usr/bin/git").resolve())},
+                env=sanitized_environment(
+                    {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+                ),
             )
             self.assertEqual(0, verify_restored.returncode, verify_restored.stderr)
 
@@ -502,10 +519,9 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 check=True,
             )
             contract_directory = Path(temporary_directory) / "contract"
-            environment = {
-                **os.environ,
-                "TRUSTED_GIT": str(Path("/usr/bin/git").resolve()),
-            }
+            environment = sanitized_environment(
+                {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+            )
             prepare = subprocess.run(
                 [
                     *SANITIZED_PYTHON,
@@ -578,10 +594,9 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
-                env={
-                    **os.environ,
-                    "TRUSTED_GIT": str(Path("/usr/bin/git").resolve()),
-                },
+                env=sanitized_environment(
+                    {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+                ),
             )
             self.assertNotEqual(0, result.returncode)
             self.assertIn("executable mode", result.stderr)
@@ -633,11 +648,12 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
-                env={
-                    **os.environ,
-                    "GIT_ARGUMENT_LOG": str(argument_log),
-                    "TRUSTED_GIT": str(TRUSTED_GIT_FIXTURE),
-                },
+                env=sanitized_environment(
+                    {
+                        "GIT_ARGUMENT_LOG": str(argument_log),
+                        "TRUSTED_GIT": str(TRUSTED_GIT_FIXTURE),
+                    }
+                ),
             )
             self.assertEqual(0, result.returncode, result.stderr)
             arguments = argument_log.read_text(encoding="utf-8").splitlines()

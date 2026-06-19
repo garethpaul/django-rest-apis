@@ -27,6 +27,12 @@ VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 WORKFLOW_CHECKER="$ROOT_DIR/scripts/check-workflow-checkout.py"
 WORKFLOW_TESTS="$ROOT_DIR/scripts/test-workflow-checkout.py"
 
+run_python() {
+  env -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS \
+    PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
+    python3 -I -S -X "pycache_prefix=${TMPDIR:-/tmp}/django-rest-apis-pycache-$$" "$@"
+}
+
 require_file() {
   path=$1
   if [ ! -f "$ROOT_DIR/$path" ]; then
@@ -72,9 +78,7 @@ for path in \
   require_file "$path"
 done
 
-env -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS \
-  PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
-  python3 -I -S "$WORKFLOW_CHECKER" "$ROOT_DIR"
+run_python "$WORKFLOW_CHECKER" "$ROOT_DIR"
 
 if ! grep -Fq 'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
   [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 10 ]; then
@@ -498,9 +502,9 @@ if grep -Fq "raise Exception('No user for twitter API call')" "$VIEWS" ||
   exit 1
 fi
 
-python3 -m py_compile "$SETTINGS" "$VIEWS" "$WORKFLOW_CHECKER" "$VIEW_TESTS" "$WORKFLOW_TESTS"
-python3 "$ROOT_DIR/scripts/test-settings-helpers.py"
-python3 "$VIEW_TESTS"
-python3 "$WORKFLOW_TESTS"
+run_python -m py_compile "$SETTINGS" "$VIEWS" "$WORKFLOW_CHECKER" "$VIEW_TESTS" "$WORKFLOW_TESTS"
+run_python "$ROOT_DIR/scripts/test-settings-helpers.py"
+run_python "$VIEW_TESTS"
+run_python "$WORKFLOW_TESTS"
 
 printf '%s\n' "Django settings security baseline checks passed."

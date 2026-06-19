@@ -1,7 +1,7 @@
 .PHONY: build lint test verify check
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-override PYTHON := env -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 python3 -I -S
+override PYTHON := env -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 python3 -I -S -X pycache_prefix=$${TMPDIR:-/tmp}/django-rest-apis-pycache-$$$$
 
 lint:
 	$(ROOT)scripts/check-baseline.sh
