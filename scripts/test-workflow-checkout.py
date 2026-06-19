@@ -714,6 +714,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 text=True,
             )
         self.assertNotEqual(0, result.returncode)
+        self.assertNotIn(str(fake), result.stderr)
         self.assertTrue(
             "root-owned and immutable" in result.stderr
             or "resolved path" in result.stderr

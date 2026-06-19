@@ -250,29 +250,25 @@ def run_git(repository, arguments):
 def validate_trusted_executable(path):
     executable = Path(path)
     if not executable.is_absolute():
-        return "Trusted executable path must be absolute: {}.".format(path)
+        return "Trusted executable path must be absolute."
     try:
         resolved = executable.resolve(strict=True)
-    except OSError as error:
-        return "Trusted executable cannot be resolved: {}: {}.".format(path, error)
+    except OSError:
+        return "Trusted executable cannot be resolved."
     if resolved != executable:
-        return "Trusted executable must use its resolved path: {} -> {}.".format(
-            executable, resolved
-        )
+        return "Trusted executable must use its resolved path."
     current = executable
     while True:
         details = os.lstat(current)
         if current == executable and not stat.S_ISREG(details.st_mode):
-            return "Trusted executable must be a regular file: {}.".format(executable)
+            return "Trusted executable must be a regular file."
         if details.st_uid != 0 or details.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
-            return "Trusted executable path must be root-owned and immutable: {}.".format(
-                current
-            )
+            return "Trusted executable path must be root-owned and immutable."
         if current.parent == current:
             break
         current = current.parent
     if not os.access(executable, os.X_OK):
-        return "Trusted executable is not executable: {}.".format(executable)
+        return "Trusted executable is not executable."
     return None
 
 
