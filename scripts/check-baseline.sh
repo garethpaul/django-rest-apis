@@ -39,9 +39,16 @@ STATUS_TEXT_SURROGATE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-status-text-
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
-CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
+WORKFLOW_CHECKER="$ROOT_DIR/scripts/check-workflow-checkout.py"
+WORKFLOW_TESTS="$ROOT_DIR/scripts/test-workflow-checkout.py"
+
+run_python() {
+  env -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS \
+    PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
+    python3 -I -S -X "pycache_prefix=${TMPDIR:-/tmp}/django-rest-apis-pycache-$$" "$@"
+}
 
 require_file() {
   path=$1
@@ -65,8 +72,10 @@ for path in \
   "home/views.py" \
   "templates/base.html" \
   "templates/home.html" \
+  "scripts/check-workflow-checkout.py" \
   "scripts/test-settings-helpers.py" \
   "scripts/test-view-helpers.py" \
+  "scripts/test-workflow-checkout.py" \
   "docs/plans/2026-06-08-django-check-wrapper.md" \
   "docs/plans/2026-06-08-django-settings-security-baseline.md" \
   "docs/plans/2026-06-08-settings-helper-regression-tests.md" \
@@ -187,48 +196,10 @@ TWITTER_SCREEN_NAME_VALID=$(awk '
   capture { print }
 ' "$VIEWS")
 
-if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW" ||
-  ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$CI_WORKFLOW" ||
-  ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$CI_WORKFLOW" ||
-  ! grep -Fq "run: make check" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must pin actions and run make check across supported Python releases." >&2
-  exit 1
-fi
-
-if ! grep -Fq "permissions:" "$CI_WORKFLOW" || ! grep -Fq "contents: read" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must keep repository access read-only." >&2
-  exit 1
-fi
-
-if [ "$(grep -Fc "uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW")" -ne 1 ] ||
-  [ "$(grep -Fc "persist-credentials: false" "$CI_WORKFLOW")" -ne 1 ]; then
-  printf '%s\n' "GitHub Actions must use one pinned checkout without persisting credentials." >&2
-  exit 1
-fi
-
-if ! awk '
-  /uses: actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10/ { checkout = 1; next }
-  checkout && /^[[:space:]]+with:[[:space:]]*$/ { options = 1; next }
-  checkout && options && /^[[:space:]]+persist-credentials: false[[:space:]]*$/ { protected = 1; next }
-  checkout && /^[[:space:]]+- / { exit }
-  END { exit protected ? 0 : 1 }
-' "$CI_WORKFLOW"; then
-  printf '%s\n' "Checkout credential persistence must be disabled on the pinned checkout step." >&2
-  exit 1
-fi
-
-if ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 5" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must support bounded manual verification." >&2
-  exit 1
-fi
-
-if ! grep -Fq "runs-on: ubuntu-24.04" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions must use the stable Ubuntu 24.04 runner." >&2
-  exit 1
-fi
+run_python "$WORKFLOW_CHECKER" "$ROOT_DIR"
 
 if ! grep -Fxq 'override ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
-  [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 7 ]; then
+  [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 10 ]; then
   printf '%s\n' "Make verification must protect and use the repository root." >&2
   exit 1
 fi
@@ -734,7 +705,9 @@ fi
 if ! grep -Fq "status: completed" "$CHECKOUT_CREDENTIAL_PLAN" ||
   ! grep -Fq 'local `make check` passed' "$CHECKOUT_CREDENTIAL_PLAN" ||
   ! grep -Fq "external working directory" "$CHECKOUT_CREDENTIAL_PLAN" ||
-  ! grep -Fq "hostile mutations were rejected" "$CHECKOUT_CREDENTIAL_PLAN"; then
+  ! grep -Fq "hostile mutations were rejected" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "legacy dependency set remains unchanged" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "does not establish Django runtime compatibility" "$CHECKOUT_CREDENTIAL_PLAN"; then
   printf '%s\n' "Checkout credential boundary plan must record completed verification." >&2
   exit 1
 fi
@@ -1025,8 +998,9 @@ if ! grep -Fq "rejection of lone-surrogate status text before provider writes" "
   exit 1
 fi
 
-python3 -m py_compile "$SETTINGS" "$VIEWS" "$VIEW_TESTS"
-python3 "$ROOT_DIR/scripts/test-settings-helpers.py"
-python3 "$VIEW_TESTS"
+run_python -m py_compile "$SETTINGS" "$VIEWS" "$WORKFLOW_CHECKER" "$VIEW_TESTS" "$WORKFLOW_TESTS"
+run_python "$ROOT_DIR/scripts/test-settings-helpers.py"
+run_python "$VIEW_TESTS"
+run_python "$WORKFLOW_TESTS"
 
 printf '%s\n' "Django settings security baseline checks passed."

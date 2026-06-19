@@ -115,11 +115,36 @@ environment values. When debug is disabled, Django session and CSRF cookies
 always use the secure flag; debug-mode HTTPS testing can opt in with
 `DJANGO_SECURE_COOKIES=1`. Logout is kept behind a
 CSRF-protected POST-only form instead of a GET link.
-GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 for pushes,
+GitHub Actions runs the canonical checker and its independent mutation suite
+inside locked-down read-only containers before an explicit absolute
+`/usr/bin/make -f /workspace/Makefile check` on Python 3.10, 3.12, and 3.14 for pushes,
 pull requests, and manual dispatches on Ubuntu 24.04. The workflow uses commit-pinned actions,
 read-only repository access, and a bounded runtime without installing the
 unsupported Django 1.6 dependency set. It does not persist checkout credentials
-after source retrieval.
+after source retrieval. A standard-library canonical contract freezes the exact
+workflow path/type inventory and SHA-256 of every workflow file, plus the exact
+recursive path/type inventory and hashes of repository-local action metadata.
+Traversal uses no-follow `lstat` checks, so symlinks and non-regular entries
+anywhere below either Actions directory fail. The reviewed raw Makefile bytes
+are also SHA-256 bound, and `PYTHON` cannot be overridden by callers. The
+current local action inventory is empty and `.github/actions` is absent. Before
+tests, the checker requires a clean tracked tree, snapshots every tracked file
+with its permission mode plus index-stage metadata and committed tree identity,
+and creates exact
+separate test and verifier copies. Candidate tests receive only a read-only test
+copy inside a no-network, capability-free, non-root container; they cannot mount
+the source, verifier, snapshot, or host tools. Verifier containers receive only
+read-only source/snapshot/verifier mounts. Host tools are resolved to verified
+absolute root-owned paths before candidate code, and host `PATH` is restricted
+to `/usr/bin:/bin`. `PYTHONPATH`, `PYTHONHOME`, user-site startup, `MAKEFILES`,
+`MAKEFLAGS`, `MFLAGS`, and `GNUMAKEFLAGS` are scrubbed. Root or nested
+`GNUmakefile`/lowercase `makefile` shadows are forbidden. Any legitimate
+workflow, local-action, Makefile, checker, test, or tracked-tree edit requires a
+reviewed canonical contract update with new hashes, mutations, and full local
+and hosted verification.
+Preparation preserves each tracked mode with `chmod`, validates bytes and modes
+in both copies, and requires `scripts/check-baseline.sh` to remain executable
+before the Make container can start.
 
 Runtime and integration claims use the exact-head checklist in
 [`RUNTIME_VERIFICATION.md`](RUNTIME_VERIFICATION.md). The checklist keeps
