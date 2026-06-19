@@ -16,7 +16,7 @@ CHECKER = ROOT / "scripts" / "check-workflow-checkout.py"
 CANONICAL_WORKFLOW = ROOT / ".github" / "workflows" / "check.yml"
 CANONICAL_MAKEFILE = ROOT / "Makefile"
 CANONICAL_WORKFLOW_SHA256 = (
-    "e3cc7504f4be6fa4f1d4a4d4ec253d7122801f5c587e8bea2cb3899a6fdbacea"
+    "f5cdeb4df78224823a02eeade8a74f75dc0110b0dc0b6e75d6577fa09400a2e2"
 )
 CANONICAL_MAKEFILE_SHA256 = (
     "eff83ef67a609d2f647f65458e462d239a7ec593d96eff24687d4252a6657e5d"
@@ -107,6 +107,8 @@ class CanonicalActionsContractTests(unittest.TestCase):
         required_fragments = (
             '"$python_path" -I -S scripts/check-workflow-checkout.py tools',
             '"$python_path" -I -S scripts/check-workflow-checkout.py prepare',
+            '/usr/bin/mkdir -p "$contract_dir/build"',
+            '> "$contract_dir/build/Dockerfile"',
             '"$docker_path" build',
         )
         positions = []
@@ -383,7 +385,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
             Path(hook_directory, "sitecustomize.py").write_text(
                 "import _hashlib\n_hashlib.openssl_sha256 = lambda *args, **kwargs: "
                 "type('Fake', (), {'update': lambda self, value: None, "
-                "'hexdigest': lambda self: 'e3cc7504f4be6fa4f1d4a4d4ec253d7122801f5c587e8bea2cb3899a6fdbacea'})()\n",
+                "'hexdigest': lambda self: 'f5cdeb4df78224823a02eeade8a74f75dc0110b0dc0b6e75d6577fa09400a2e2'})()\n",
                 encoding="utf-8",
             )
             (repository / "scripts").mkdir()

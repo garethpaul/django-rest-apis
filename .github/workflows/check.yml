@@ -38,13 +38,13 @@ jobs:
             /usr/bin/bash /usr/bin/realpath /usr/bin/rm /usr/bin/mkdir
           contract_dir="$RUNNER_TEMP/django-rest-actions-contract"
           /usr/bin/rm -rf "$contract_dir"
-          /usr/bin/mkdir -p "$contract_dir/build"
           TRUSTED_GIT="$git_path" \
           "$env_path" -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS \
             -u MFLAGS -u GNUMAKEFLAGS \
             PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
             "$python_path" -I -S scripts/check-workflow-checkout.py prepare \
             "$GITHUB_WORKSPACE" "$contract_dir"
+          /usr/bin/mkdir -p "$contract_dir/build"
           /usr/bin/printf '%s\n' \
             'ARG PYTHON_VERSION' \
             'FROM python:${PYTHON_VERSION}-slim-bookworm' \

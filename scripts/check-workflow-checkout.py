@@ -15,7 +15,7 @@ CANONICAL_WORKFLOW_ENTRIES = {
 }
 CANONICAL_WORKFLOW_HASHES = {
     ".github/workflows/check.yml": (
-        "e3cc7504f4be6fa4f1d4a4d4ec253d7122801f5c587e8bea2cb3899a6fdbacea"
+        "f5cdeb4df78224823a02eeade8a74f75dc0110b0dc0b6e75d6577fa09400a2e2"
     ),
 }
 CANONICAL_LOCAL_ACTION_ENTRIES = {}
