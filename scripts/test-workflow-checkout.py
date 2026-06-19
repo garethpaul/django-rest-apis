@@ -532,9 +532,11 @@ class CanonicalActionsContractTests(unittest.TestCase):
                     / "check-baseline.sh"
                 )
                 self.assertEqual(
-                    source_mode, stat.S_IMODE(os.lstat(copied_script).st_mode)
+                    0o755, stat.S_IMODE(os.lstat(copied_script).st_mode)
                 )
-                self.assertTrue(os.access(copied_script, os.X_OK))
+                for parent in (copied_script.parent, copied_script.parent.parent):
+                    parent_mode = stat.S_IMODE(os.lstat(parent).st_mode)
+                    self.assertEqual(0o111, parent_mode & 0o111)
 
     def test_prepare_rejects_non_executable_tracked_baseline(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
