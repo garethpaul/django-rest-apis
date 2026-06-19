@@ -24,6 +24,10 @@ Helpful reports include:
 
 ## Project Security Posture
 
+- The preserved dependency range resolves to Django 1.6.11, for which the
+  direct dependency audit reports **18 known vulnerabilities**. This repository
+  is archival and unsuitable for live deployment. Source/helper gates do not
+  make the runtime audit-clean or production-safe.
 - This repository appears to be a Python web API or service project. The active security scope is the code and documentation on the default branch.
 - Review found authentication, token, or session-related code paths; changes in those areas should receive security-focused review before merge.
 - Review found external API integrations or credential-adjacent configuration; changes in those areas should receive security-focused review before merge.
@@ -38,12 +42,61 @@ For web services, APIs, sockets, or scraping workflows, prioritize reports invol
 For this Django sample, missing Twitter access tokens should fail with an explicit Django configuration error before an API client is constructed.
 Expected Twitter API errors should render stable generic messages and must not
 expose raw provider exception details to authenticated users.
+Transport-level provider I/O failures must use the same contained error path.
+Unencodable user-authored Twitter status text must be rejected before provider
+writes so request encoding failures do not escape the view boundary.
+Malformed successful Twitter timeline results must use the same generic empty
+state instead of passing incompatible provider data into template rendering.
+Malformed successful Twitter timeline items must also reject the complete
+timeline before missing IDs, text, users, or screen names reach the template.
+Validated timeline values must be copied into inert render data so templates
+cannot re-read mutable or exception-raising provider accessors.
+Twitter timeline screen names must contain only 1-15 ASCII letters, digits, or
+underscores before they are interpolated into provider status URLs.
+Timeline request screen names must be canonical before provider I/O; malformed
+local usernames must not be normalized or sent to the timeline endpoint.
+Oversized successful Twitter timeline collections must be rejected before
+template rendering, using the same limit sent to the provider request.
+Oversized provider-controlled Twitter timeline text must reject the complete
+collection before template rendering, using the posting text limit.
+Oversized provider-controlled Twitter status IDs must reject the complete
+collection before permalink rendering.
+Unencodable provider-controlled Twitter timeline text must reject the complete
+collection before response encoding.
+Provider-controlled attribute failures must use the same generic empty state
+without exposing the exception or rendering a partial result.
 Production settings must always mark session and CSRF cookies secure; local
 debug mode may opt in when it is served over HTTPS.
-GitHub Actions runs isolated `make check` coverage on Python 3.10, 3.12, and
-3.14 with commit-pinned actions, read-only repository access, and bounded
-execution. CI deliberately does not install the unsupported Django 1.6-era
-dependency set.
+GitHub Actions resolves and verifies absolute root-owned host tools, then runs
+the canonical checker and independent mutation tests in separate read-only
+containers before explicit absolute `make -f Makefile` coverage
+on Python 3.10, 3.12, and 3.14 with commit-pinned
+actions, read-only repository access, and bounded execution. CI deliberately
+does not install the unsupported Django 1.6-era dependency set and does not persist checkout credentials
+after source retrieval. The checker freezes the
+complete reviewed workflow and Makefile bytes. It also uses recursive no-follow
+`lstat` traversal to enforce exact path/type inventories under
+`.github/workflows` and `.github/actions`, rejecting every symlink and
+non-regular entry; the current local-action inventory is empty and its root is
+absent. `PYTHON` is
+non-overridable in the reviewed Makefile. Any legitimate workflow,
+local-action, or Makefile change requires a reviewed canonical contract update
+in both checker and independent tests before it can pass verification.
+The hosted integrity step requires a clean tracked tree and snapshots exact file
+blobs and permission modes, index entries, and committed tree identity. Both
+prepared copies are byte/mode validated, and the directly executed baseline
+must retain its executable bit. Candidate tests receive only
+a read-only test copy in a non-root, no-network, capability-free container and
+cannot access the source, verifier, snapshot, or host tools. Separate verifier
+containers use read-only mounts to validate source state before and after the
+Make container. Python startup paths/user site and GNU Make environment inputs,
+including `GNUMAKEFLAGS`, are removed. `GNUmakefile`, lowercase `makefile`, includes introduced by changing
+the canonical Makefile, and alternate Make roots are rejected or bypassed by
+the explicit absolute `-C`/`-f` invocation.
+The Python matrix validates dependency-free source contracts; it is not
+evidence that the historical Django runtime is compatible with those Python
+releases or free from known dependency vulnerabilities. The direct audit is
+explicitly not clean: Django 1.6.11 has 18 known vulnerabilities.
 
 ## Dependency and Supply Chain Security
 

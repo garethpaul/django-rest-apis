@@ -58,6 +58,13 @@ migration of Django settings, social authentication, templates, URLs,
 migrations, and deployment tooling. The supported modern verification path is
 the isolated standard-library helper suite behind `make check`.
 
+An exact direct-dependency audit of the preserved upper-bound stack selected
+Django 1.6.11 and reported **18 known vulnerabilities in Django**. This
+repository is therefore unsuitable for live deployment, even with the local
+settings and provider-boundary hardening in place. The helper suite verifies
+repository-owned contracts only; it is not an audit-clean or production-safe
+runtime claim.
+
 The setup commands above are derived from repository files. Legacy mobile, Python, or JavaScript samples may require older SDKs or package versions than a modern workstation uses by default.
 
 ## Running or Using the Project
@@ -78,26 +85,82 @@ scripts/check-baseline.sh
 `make check` runs the source baseline and no-Django-runtime helper tests from
 the repository root. The guard verifies that `DJANGO_SECRET_KEY`,
 `DJANGO_DEBUG`, and Twitter credential settings are environment-driven and that
-the old hardcoded `SECRET_KEY` is gone. It also runs no-Django-runtime settings
+the old hardcoded `SECRET_KEY` and committed development fallback are gone.
+Every mode requires a non-blank configured secret. It also runs no-Django-runtime settings
 helper tests, checks POST-only status submission, Twitter status normalization,
+rejection of non-string status values before provider writes,
+rejection of lone-surrogate status text before provider writes while valid
+supplementary Unicode remains postable,
 safe Twitter status links, missing social OAuth token fallback, missing
 social-auth row fallback, blank social OAuth token fallback, malformed social
-OAuth token fallback, and pinned legacy dependency ranges. It also verifies
+OAuth token fallback, non-mapping social-auth metadata fallback, and pinned
+legacy dependency ranges. It also verifies
 that missing Twitter access tokens fail clearly before constructing the API
-client. Expected Twitter posting and timeline errors are contained at the view
-boundary, with generic messages that do not expose provider details and with
+client. Expected Twitter posting and timeline errors, including transport-level
+I/O failures, are contained at the view boundary, with generic messages that do not expose provider details and with
 available timeline data preserved after posting failures. Successful status
 posts redirect to `/home` before timeline loading so browser refreshes do not
-resubmit the mutation. `DJANGO_DEBUG`
+resubmit the mutation. Valid list and tuple timeline responses remain
+renderable; malformed timeline results become an empty timeline with the same
+generic load error. Within accepted collections, malformed timeline items and
+items whose provider attributes raise during validation reject the complete timeline
+unless every item provides the ID, nonblank text, and user screen name required
+by the template. Accepted provider fields are copied into inert dictionaries
+after one validation pass so templates do not re-invoke provider-controlled
+accessors. Provider screen names are restricted to 1-15 ASCII letters,
+digits, or underscores before template rendering, and blank timeline status text
+is rejected before template rendering. Noncanonical local usernames are
+rejected before timeline provider I/O without rewriting the account value.
+Oversized timeline results beyond the requested ten statuses are rejected with
+the same generic load error rather than rendered or silently truncated.
+Provider timeline text longer than 280 characters rejects the complete result
+before template rendering, while exact-limit text remains accepted.
+Provider timeline status IDs outside the unsigned 64-bit range reject the
+complete result before permalink rendering.
+Lone-surrogate provider timeline text rejects the complete result before
+response encoding while valid supplementary Unicode remains renderable.
+`DJANGO_DEBUG`
 parsing trims whitespace before evaluating boolean
 environment values. When debug is disabled, Django session and CSRF cookies
 always use the secure flag; debug-mode HTTPS testing can opt in with
 `DJANGO_SECURE_COOKIES=1`. Logout is kept behind a
 CSRF-protected POST-only form instead of a GET link.
-GitHub Actions runs `make check` on Python 3.10, 3.12, and 3.14 for pushes,
+GitHub Actions runs the canonical checker and its independent mutation suite
+inside locked-down read-only containers before an explicit absolute
+`/usr/bin/make -f /workspace/Makefile check` on Python 3.10, 3.12, and 3.14 for pushes,
 pull requests, and manual dispatches on Ubuntu 24.04. The workflow uses commit-pinned actions,
 read-only repository access, and a bounded runtime without installing the
-unsupported Django 1.6 dependency set.
+unsupported Django 1.6 dependency set. It does not persist checkout credentials
+after source retrieval. A standard-library canonical contract freezes the exact
+workflow path/type inventory and SHA-256 of every workflow file, plus the exact
+recursive path/type inventory and hashes of repository-local action metadata.
+Traversal uses no-follow `lstat` checks, so symlinks and non-regular entries
+anywhere below either Actions directory fail. The reviewed raw Makefile bytes
+are also SHA-256 bound, and `PYTHON` cannot be overridden by callers. The
+current local action inventory is empty and `.github/actions` is absent. Before
+tests, the checker requires a clean tracked tree, snapshots every tracked file
+with its permission mode plus index-stage metadata and committed tree identity,
+and creates exact
+separate test and verifier copies. Candidate tests receive only a read-only test
+copy inside a no-network, capability-free, non-root container; they cannot mount
+the source, verifier, snapshot, or host tools. Verifier containers receive only
+read-only source/snapshot/verifier mounts. Host tools are resolved to verified
+absolute root-owned paths before candidate code, and host `PATH` is restricted
+to `/usr/bin:/bin`. `PYTHONPATH`, `PYTHONHOME`, user-site startup, `MAKEFILES`,
+`MAKEFLAGS`, `MFLAGS`, and `GNUMAKEFLAGS` are scrubbed. Root or nested
+`GNUmakefile`/lowercase `makefile` shadows are forbidden. Any legitimate
+workflow, local-action, Makefile, checker, test, or tracked-tree edit requires a
+reviewed canonical contract update with new hashes, mutations, and full local
+and hosted verification.
+Preparation preserves each tracked mode with `chmod`, validates bytes and modes
+in both copies, and requires `scripts/check-baseline.sh` to remain executable
+before the Make container can start.
+
+Runtime and integration claims use the exact-head checklist in
+[`RUNTIME_VERIFICATION.md`](RUNTIME_VERIFICATION.md). The checklist keeps
+portable helper results separate from local Django, database, browser, OAuth,
+social-auth provider, and live Twitter evidence.
+It requires isolated synthetic accounts and sanitized results.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.
 
@@ -105,10 +168,11 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
 - Required environment variables for local app startup are:
-  `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`,
-  `DJANGO_SECURE_COOKIES`,
+  `DJANGO_SECRET_KEY`,
   `SOCIAL_AUTH_TWITTER_KEY`, `SOCIAL_AUTH_TWITTER_SECRET`,
   `TWITTER_ACCESS_TOKEN`, and `TWITTER_ACCESS_TOKEN_SECRET`.
+- Optional controls are `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and
+  `DJANGO_SECURE_COOKIES`.
 
 ## Security and Privacy Notes
 
@@ -141,6 +205,12 @@ When the required SDK or runtime is unavailable, use static checks and source re
   baseline.
 - See `docs/plans/2026-06-12-twitter-api-error-boundary.md` for stable posting
   and timeline failure handling.
+- See `docs/plans/2026-06-13-twitter-timeline-type-guard.md` for malformed
+  successful timeline response containment.
+- See `docs/plans/2026-06-13-twitter-timeline-item-guard.md` for per-status
+  template-field validation before rendering.
+- See `docs/plans/2026-06-14-twitter-timeline-text-guard.md` for the nonblank
+  provider text boundary.
 - See `docs/plans/2026-06-12-twitter-post-redirect-get.md` for duplicate status
   submission prevention.
 - See `docs/plans/2026-06-10-production-secure-cookies.md` for production

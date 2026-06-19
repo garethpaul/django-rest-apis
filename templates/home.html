@@ -23,7 +23,7 @@ Tweet:
   
   {% for s in statuses %}
   <br>
-  <a href="https://twitter.com/{{s.user.screen_name}}/status/{{s.id}}" target="_blank" rel="noopener noreferrer">{{s.id}}</a> {{s.text}}
+  <a href="https://twitter.com/{{s.screen_name}}/status/{{s.id}}" target="_blank" rel="noopener noreferrer">{{s.id}}</a> {{s.text}}
   {% endfor %}
   
 {% else %}

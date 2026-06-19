@@ -1,7 +1,77 @@
 # Changelog
 
+## 2026-06-19
+
+- Required a non-blank configured `DJANGO_SECRET_KEY` in debug and production,
+  removing the reusable committed development fallback.
+- Kept saved social-auth access-token key/secret pairs atomic so malformed
+  partial metadata cannot be combined with an unrelated environment token.
+- Contained provider transport I/O failures behind stable user-facing errors.
+- Rejected executable collection/scalar subclasses at provider boundaries and
+  copied accepted timeline fields into inert dictionaries before rendering.
+- Recorded that Django 1.6.11 has 18 known vulnerabilities and that this
+  archival repository is unsuitable for live deployment.
+
+## 2026-06-15
+
+- Rejected lone-surrogate status text before provider writes while preserving
+  valid supplementary Unicode.
+- Rejected lone-surrogate provider timeline text before response encoding.
+- Rejected provider timeline status IDs outside the unsigned 64-bit range
+  before permalink rendering.
+- Rejected oversized provider timeline text before template rendering while
+  preserving text at the configured posting limit.
+- Rejected oversized Twitter timeline collections beyond the requested result
+  limit before template rendering.
+- Rejected noncanonical timeline request screen names before provider I/O.
+- Rejected noncanonical Twitter timeline screen names before template rendering.
+
+## 2026-06-14
+
+- Added an exact-head Django runtime verification matrix that separates
+  portable checks from sanitized local, database, browser, OAuth, provider,
+  and live-service evidence.
+- Contained exceptions raised by provider-controlled timeline status and nested
+  user attributes before template rendering.
+- Rejected blank Twitter timeline status text before template rendering.
+
+## 2026-06-13
+
+- Contained malformed Twitter timeline items before template field access,
+  rejecting incomplete provider collections with the existing generic error.
+- Contained malformed Twitter timeline results behind an empty-state type
+  boundary while preserving valid lists, tuples, and existing post errors.
+- Ignored non-mapping social-auth metadata so valid environment Twitter tokens
+  remain usable when a legacy row has an incompatible outer value.
+- Rejected non-string Twitter status values before normalization or provider
+  writes, with helper and home-view regressions.
+
 ## 2026-06-12
 
+- Stopped GitHub Actions checkout credential persistence and added an exact
+  workflow contract for the single pinned checkout step.
+- Replaced semantic workflow scanning with exact workflow and local-action
+  path/SHA-256 manifests plus hostile inventory, byte, and wiring mutations.
+- Bound the reviewed Makefile bytes into the canonical contract, made the
+  Python interpreter non-overridable, and run the checker plus its independent
+  mutation suite before the hosted `make check` step.
+- Switched workflow and local-action inventory traversal to recursive,
+  no-follow `lstat` validation so nested symlinks and non-regular entries fail.
+- Isolated all Python contract processes with sanitized startup state, replaced
+  `hashlib` with the built-in OpenSSL SHA-256 primitive, and run mutation tests
+  from an exact disposable copy of a clean tracked-tree snapshot.
+- Revalidate the protected source tree before and after explicit
+  `make -f Makefile`, rejecting Make environment injection and every
+  `GNUmakefile` or lowercase `makefile` shadow path.
+- Moved candidate tests and Make into locked-down read-only containers that
+  cannot mount the source, verifier, snapshot, or host tool paths; verifier
+  containers receive only read-only source/snapshot/verifier mounts.
+- Resolve and verify absolute root-owned host executables before candidate code,
+  sanitize `PATH`, snapshot tracked files/index/tree, and reject
+  `GNUMAKEFLAGS` alongside all other Make-control variables.
+- Preserve exact tracked permission modes in both prepared copies and validate
+  byte/mode equality before any container runs; fail preparation if the
+  directly executed baseline loses its executable bit.
 - Contained expected python-twitter posting and timeline failures so the home
   page renders stable generic messages instead of returning an internal error.
 - Preserved available timeline results when a status post fails and added

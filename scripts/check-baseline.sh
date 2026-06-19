@@ -8,6 +8,7 @@ HOME_TEMPLATE="$ROOT_DIR/templates/home.html"
 BASE_TEMPLATE="$ROOT_DIR/templates/base.html"
 REQUIREMENTS="$ROOT_DIR/requirements.txt"
 README="$ROOT_DIR/README.md"
+VISION="$ROOT_DIR/VISION.md"
 PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-settings-security-baseline.md"
 STATUS_PLAN="$ROOT_DIR/docs/plans/2026-06-08-twitter-status-normalization.md"
 CHECK_PLAN="$ROOT_DIR/docs/plans/2026-06-08-django-check-wrapper.md"
@@ -21,9 +22,33 @@ CI_PLAN="$ROOT_DIR/docs/plans/2026-06-10-ci-baseline.md"
 SECURE_COOKIE_PLAN="$ROOT_DIR/docs/plans/2026-06-10-production-secure-cookies.md"
 TWITTER_API_ERROR_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-api-error-boundary.md"
 POST_REDIRECT_PLAN="$ROOT_DIR/docs/plans/2026-06-12-twitter-post-redirect-get.md"
-CI_WORKFLOW="$ROOT_DIR/.github/workflows/check.yml"
+STATUS_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-status-type-guard.md"
+CHECKOUT_CREDENTIAL_PLAN="$ROOT_DIR/docs/plans/2026-06-12-checkout-credential-boundary.md"
+EXTRA_DATA_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-extra-data-type-guard.md"
+TIMELINE_TYPE_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-type-guard.md"
+TIMELINE_ITEM_PLAN="$ROOT_DIR/docs/plans/2026-06-13-twitter-timeline-item-guard.md"
+TIMELINE_ACCESSOR_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-accessor-guard.md"
+TIMELINE_TEXT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-twitter-timeline-text-guard.md"
+SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-001-twitter-screen-name-guard.md"
+REQUEST_SCREEN_NAME_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-request-name-guard.md"
+TIMELINE_RESULT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-result-limit.md"
+TIMELINE_TEXT_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-text-limit.md"
+TIMELINE_STATUS_ID_LIMIT_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-status-id-limit.md"
+TIMELINE_TEXT_SURROGATE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-timeline-text-surrogate-guard.md"
+STATUS_TEXT_SURROGATE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-status-text-surrogate-guard.md"
+MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
+RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
+RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
+WORKFLOW_CHECKER="$ROOT_DIR/scripts/check-workflow-checkout.py"
+WORKFLOW_TESTS="$ROOT_DIR/scripts/test-workflow-checkout.py"
+
+run_python() {
+  env -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS -u MFLAGS -u GNUMAKEFLAGS \
+    PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
+    python3 -I -S -X "pycache_prefix=${TMPDIR:-/tmp}/django-rest-apis-pycache-$$" "$@"
+}
 
 require_file() {
   path=$1
@@ -38,6 +63,7 @@ for path in \
   ".github/workflows/check.yml" \
   "CHANGES.md" \
   "README.md" \
+  "RUNTIME_VERIFICATION.md" \
   "SECURITY.md" \
   "VISION.md" \
   "Makefile" \
@@ -46,8 +72,10 @@ for path in \
   "home/views.py" \
   "templates/base.html" \
   "templates/home.html" \
+  "scripts/check-workflow-checkout.py" \
   "scripts/test-settings-helpers.py" \
   "scripts/test-view-helpers.py" \
+  "scripts/test-workflow-checkout.py" \
   "docs/plans/2026-06-08-django-check-wrapper.md" \
   "docs/plans/2026-06-08-django-settings-security-baseline.md" \
   "docs/plans/2026-06-08-settings-helper-regression-tests.md" \
@@ -60,6 +88,20 @@ for path in \
   "docs/plans/2026-06-10-production-secure-cookies.md" \
   "docs/plans/2026-06-12-twitter-api-error-boundary.md" \
   "docs/plans/2026-06-12-twitter-post-redirect-get.md" \
+  "docs/plans/2026-06-13-twitter-status-type-guard.md" \
+  "docs/plans/2026-06-13-twitter-extra-data-type-guard.md" \
+  "docs/plans/2026-06-13-twitter-timeline-type-guard.md" \
+  "docs/plans/2026-06-13-twitter-timeline-item-guard.md" \
+  "docs/plans/2026-06-14-twitter-timeline-accessor-guard.md" \
+  "docs/plans/2026-06-14-twitter-timeline-text-guard.md" \
+  "docs/plans/2026-06-15-twitter-timeline-request-name-guard.md" \
+  "docs/plans/2026-06-15-twitter-timeline-result-limit.md" \
+  "docs/plans/2026-06-15-twitter-timeline-status-id-limit.md" \
+  "docs/plans/2026-06-15-twitter-timeline-text-surrogate-guard.md" \
+  "docs/plans/2026-06-15-twitter-status-text-surrogate-guard.md" \
+  "docs/plans/2026-06-14-make-root-override-protection.md" \
+  "docs/plans/2026-06-14-django-runtime-verification.md" \
+  "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
@@ -67,42 +109,138 @@ for path in \
   require_file "$path"
 done
 
-if ! grep -Fq "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" "$CI_WORKFLOW" ||
-  ! grep -Fq "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" "$CI_WORKFLOW" ||
-  ! grep -Fq 'python-version: ["3.10", "3.12", "3.14"]' "$CI_WORKFLOW" ||
-  ! grep -Fq "run: make check" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must pin actions and run make check across supported Python releases." >&2
+for runtime_contract in \
+  "Commit: pending implementation commit" \
+  "Pull request: pending" \
+  "Evidence status: not run" \
+  "isolated synthetic account" \
+  "Required sanitized evidence" \
+  "Use only \`pass\`, \`fail\`, \`blocked\`, or \`not run\`" \
+  "A static check, source compile, or synthetic helper test cannot mark an" \
+  "No Django server, database migration, browser, OAuth, social-auth provider, or"; do
+  if ! grep -Fq "$runtime_contract" "$RUNTIME_VERIFICATION"; then
+    printf '%s\n' "Runtime verification matrix contract is missing: $runtime_contract" >&2
+    exit 1
+  fi
+done
+
+if [ "$(grep -Ec '^\| [0-9]+ \|' "$RUNTIME_VERIFICATION")" -ne 14 ] ||
+  [ "$(grep -Ec '^\| [0-9]+ \|.*\| not run \|$' "$RUNTIME_VERIFICATION")" -ne 14 ]; then
+  printf '%s\n' "Runtime verification matrix must retain 14 explicitly not-run scenarios." >&2
   exit 1
 fi
 
-if ! grep -Fq "permissions:" "$CI_WORKFLOW" || ! grep -Fq "contents: read" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must keep repository access read-only." >&2
+for runtime_scenario in \
+  "Environment isolation" \
+  "Required configuration validation" \
+  "Django startup and system check" \
+  "Database migration" \
+  "Anonymous home route" \
+  "Authenticated home route" \
+  "Template escaping and rendering" \
+  "Social authentication success" \
+  "Social authentication denial" \
+  "Valid timeline collection" \
+  "Malformed provider accessor" \
+  "Successful status submission" \
+  "Provider write failure" \
+  "Logout and relaunch"; do
+  if [ "$(grep -Fc "| $runtime_scenario |" "$RUNTIME_VERIFICATION")" -ne 1 ]; then
+    printf '%s\n' "Runtime verification matrix scenario is missing or duplicated: $runtime_scenario" >&2
+    exit 1
+  fi
+done
+
+for runtime_guidance in \
+  "RUNTIME_VERIFICATION.md" \
+  "isolated synthetic accounts" \
+  "sanitized results"; do
+  if ! grep -Fq "$runtime_guidance" "$README"; then
+    printf '%s\n' "README runtime verification guidance is missing: $runtime_guidance" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Keep exact-head Django runtime evidence sanitized" "$VISION" ||
+  ! grep -Fq "Added an exact-head Django runtime verification matrix" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must retain the Django runtime evidence boundary." >&2
   exit 1
 fi
 
-if ! grep -Fq "workflow_dispatch:" "$CI_WORKFLOW" || ! grep -Fq "timeout-minutes: 5" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions workflow must support bounded manual verification." >&2
+for runtime_plan_contract in \
+  "Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "Python 3.12.8 and Python 3.14.0" \
+  "Twelve isolated hostile documentation mutations were rejected" \
+  "all 14 runtime scenarios remain"; do
+  if ! grep -Fq "$runtime_plan_contract" "$RUNTIME_VERIFICATION_PLAN"; then
+    printf '%s\n' "Runtime verification plan must record completed evidence: $runtime_plan_contract" >&2
+    exit 1
+  fi
+done
+
+LOAD_TWITTER_HOME=$(awk '
+  /^def load_twitter_home\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def load_twitter_home\(/ { exit }
+  capture { print }
+' "$VIEWS")
+TIMELINE_STATUS_RENDERABLE=$(awk '
+  /^def normalize_timeline_status\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def normalize_timeline_status\(/ { exit }
+  capture { print }
+' "$VIEWS")
+TWITTER_SCREEN_NAME_VALID=$(awk '
+  /^def twitter_screen_name_is_valid\(/ { capture = 1 }
+  capture && /^def / && $0 !~ /^def twitter_screen_name_is_valid\(/ { exit }
+  capture { print }
+' "$VIEWS")
+
+run_python "$WORKFLOW_CHECKER" "$ROOT_DIR"
+
+if ! grep -Fxq 'override ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
+  [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 10 ]; then
+  printf '%s\n' "Make verification must protect and use the repository root." >&2
   exit 1
 fi
 
-if ! grep -Fq "runs-on: ubuntu-24.04" "$CI_WORKFLOW"; then
-  printf '%s\n' "GitHub Actions must use the stable Ubuntu 24.04 runner." >&2
-  exit 1
-fi
-
-if ! grep -Fq 'ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))' "$MAKEFILE" ||
-  [ "$(grep -o '\$(ROOT)' "$MAKEFILE" | wc -l | tr -d ' ')" -ne 7 ]; then
-  printf '%s\n' "Make verification must resolve helper scripts from the repository root." >&2
-  exit 1
-fi
+for make_root_plan_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Work Completed" \
+  "## Verification Completed" \
+  "Python 3.12.8 and Python 3.14.0" \
+  "Three isolated hostile assignment mutations were rejected"; do
+  if ! grep -Fq "$make_root_plan_contract" "$MAKE_ROOT_PLAN"; then
+    printf '%s\n' "Make-root plan must record completed evidence: $make_root_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if grep -Fq ')e-_u9#$xfu5(uw!izbq!yu+dtf1*ce5@7w42p^ro*i-+)$yy%' "$SETTINGS"; then
   printf '%s\n' "app/settings.py must not contain the old hardcoded SECRET_KEY." >&2
   exit 1
 fi
 
+if ! grep -Fq "Django 1.6.11" "$README" ||
+  ! grep -Fq "18 known vulnerabilities" "$README" ||
+  ! grep -Fq "unsuitable for live deployment" "$README" ||
+  ! grep -Fq "18 known vulnerabilities" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "unsuitable for live deployment" "$ROOT_DIR/SECURITY.md"; then
+  printf '%s\n' "Project guidance must retain the explicit unsafe dependency posture." >&2
+  exit 1
+fi
+
 if ! grep -Fq "DJANGO_SECRET_KEY" "$SETTINGS" || ! grep -Fq "DJANGO_DEBUG" "$SETTINGS"; then
   printf '%s\n' "Django SECRET_KEY and DEBUG must be controlled by environment variables." >&2
+  exit 1
+fi
+
+if grep -Fq "django-rest-apis-local-development-key" "$SETTINGS" ||
+  ! grep -Fq "not SECRET_KEY or not SECRET_KEY.strip()" "$SETTINGS" ||
+  ! grep -Fq "test_debug_mode_requires_secret_key" "$ROOT_DIR/scripts/test-settings-helpers.py" ||
+  ! grep -Fq "test_whitespace_secret_key_is_rejected" "$ROOT_DIR/scripts/test-settings-helpers.py"; then
+  printf '%s\n' "Django must require a non-blank configured SECRET_KEY in every mode." >&2
   exit 1
 fi
 
@@ -152,6 +290,29 @@ fi
 
 if ! grep -Fq "def normalize_status" "$VIEWS" || ! grep -Fq "MAX_STATUS_LENGTH = 280" "$VIEWS"; then
   printf '%s\n' "home view must normalize and bound submitted Twitter status text." >&2
+  exit 1
+fi
+
+if ! grep -Fq "type(status) not in STRING_TYPES" "$VIEWS" ||
+  ! grep -Fq "test_normalize_status_ignores_non_string_values" "$VIEW_TESTS" ||
+  ! grep -Fq "test_home_does_not_post_non_string_status" "$VIEW_TESTS" ||
+  ! grep -Fq "malformed status must not reach Twitter" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter status normalization must reject non-string values before provider writes." >&2
+  exit 1
+fi
+
+if ! grep -Fq "non-string status values" "$README" ||
+  ! grep -Fq "Rejected non-string Twitter status values" "$ROOT_DIR/CHANGES.md" ||
+  ! grep -Fq "Reject non-string Twitter status values" "$VISION"; then
+  printf '%s\n' "Project docs must record the Twitter status type boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$STATUS_TYPE_PLAN" ||
+  ! grep -Fq "Python 3.12.8 and Python 3.14.0" "$STATUS_TYPE_PLAN" ||
+  ! grep -Fq "Eight hostile mutations were rejected" "$STATUS_TYPE_PLAN" ||
+  ! grep -Fq "was not installed or launched" "$STATUS_TYPE_PLAN"; then
+  printf '%s\n' "Twitter status type plan must record completed local verification and runtime limits." >&2
   exit 1
 fi
 
@@ -414,11 +575,135 @@ if ! grep -Fq "test_normalize_status_ignores_overlong_text" "$VIEW_TESTS"; then
 fi
 
 if ! grep -Fq "def load_twitter_home" "$VIEWS" ||
-  [ "$(grep -Fc 'except twitter.TwitterError' "$VIEWS")" -lt 2 ] ||
+  [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc 'except (twitter.TwitterError, IOError, OSError):')" -lt 2 ] ||
   ! grep -Fq "test_load_twitter_home_preserves_timeline_when_post_fails" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_returns_stable_error_when_timeline_fails" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_contains_post_timeouts" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_contains_timeline_timeouts" "$VIEW_TESTS" ||
   ! grep -Fq "twitter_error" "$HOME_TEMPLATE"; then
   printf '%s\n' "Twitter API failures must render stable view errors with helper coverage." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc "if type(statuses) not in (list, tuple):")" -ne 1 ] ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
+    /statuses = api.GetUserTimeline\(/ { request = NR }
+    /if type\(statuses\) not in \(list, tuple\):/ { guard = NR }
+    END { exit request && guard > request ? 0 : 1 }
+  ' ||
+  ! grep -Fq "test_load_twitter_home_accepts_tuple_timeline" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_list_subclasses_without_invoking_them" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_results" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_timeline" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline results must retain the tested list-or-tuple type boundary." >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "type(status_id) in INTEGER_TYPES" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "type(text) in STRING_TYPES" ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "twitter_screen_name_is_valid(screen_name)" ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fq "normalized_status = normalize_timeline_status(item)" ||
+  ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
+    /if type\(statuses\) not in \(list, tuple\):/ { type_guard = NR }
+    /normalized_status = normalize_timeline_status\(item\)/ { item_guard = NR }
+    END { exit type_guard && item_guard > type_guard ? 0 : 1 }
+  ' ||
+  ! grep -Fq "test_timeline_status_rejects_integer_subclasses" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_snapshots_provider_accessors_once" "$VIEW_TESTS" ||
+  ! grep -Fq "test_timeline_status_requires_template_fields" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_malformed_timeline_items" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_preserves_post_error_for_malformed_item" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline items must retain the tested template-field boundary." >&2
+  exit 1
+fi
+
+if ! grep -Fq "TWITTER_SCREEN_NAME_RE = re.compile(r'^[A-Za-z0-9_]{1,15}\\Z')" "$VIEWS" || \
+   ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "type(value) in STRING_TYPES" || \
+   ! printf '%s\n' "$TWITTER_SCREEN_NAME_VALID" | grep -Fq "TWITTER_SCREEN_NAME_RE.match(value) is not None" || \
+   ! grep -Fq "test_twitter_screen_name_accepts_canonical_values" "$VIEW_TESTS" || \
+   ! grep -Fq "test_twitter_screen_name_rejects_noncanonical_values" "$VIEW_TESTS" || \
+   ! grep -Fq "test_load_twitter_home_rejects_path_like_screen_name" "$VIEW_TESTS" || \
+   [ "$(grep -Fc 'sample/user' "$VIEW_TESTS")" -ne 2 ]; then
+  printf '%s\n' "Twitter timeline screen names must retain canonical helper and complete-timeline coverage." >&2
+  exit 1
+fi
+if [ ! -f "$SCREEN_NAME_PLAN" ] || \
+   ! grep -Fq 'Status: Completed' "$SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'make check' "$SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'hostile mutations' "$SCREEN_NAME_PLAN"; then
+  printf '%s\n' "Twitter screen-name guard plan must record completed verification." >&2
+  exit 1
+fi
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'screen names are restricted to 1-15 ASCII letters, digits, or underscores before template rendering' || \
+   ! tr '\n' ' ' < "$ROOT_DIR/SECURITY.md" | tr -s '[:space:]' ' ' | grep -Fq 'Twitter timeline screen names must contain only 1-15 ASCII letters, digits, or underscores' || \
+   ! grep -Fq 'Rejected noncanonical Twitter timeline screen names before template rendering' "$ROOT_DIR/CHANGES.md" || \
+   ! grep -Fq 'Reject noncanonical provider screen names before template rendering' "$VISION"; then
+  printf '%s\n' "Twitter timeline screen-name guard documentation is incomplete." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$LOAD_TWITTER_HOME" | grep -Fc 'if not twitter_screen_name_is_valid(username):')" -ne 1 ] || \
+   ! printf '%s\n' "$LOAD_TWITTER_HOME" | awk '
+     /if not twitter_screen_name_is_valid\(username\):/ { guard = NR }
+     /statuses = api.GetUserTimeline\(/ { request = NR }
+     END { exit guard && request > guard ? 0 : 1 }
+   ' || \
+   ! grep -Fq 'test_load_twitter_home_rejects_noncanonical_request_screen_name' "$VIEW_TESTS" || \
+   ! grep -Fq 'test_load_twitter_home_preserves_post_error_for_invalid_request_name' "$VIEW_TESTS" || \
+   [ "$(grep -Fc 'invalid screen name must not reach provider' "$VIEW_TESTS")" -ne 2 ]; then
+  printf '%s\n' "Twitter timeline requests must reject noncanonical screen names before provider I/O." >&2
+  exit 1
+fi
+if [ ! -f "$REQUEST_SCREEN_NAME_PLAN" ] || \
+   ! grep -Fq 'Status: Completed' "$REQUEST_SCREEN_NAME_PLAN" || \
+   ! grep -Fq '29 view helper tests' "$REQUEST_SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'hostile mutations were rejected' "$REQUEST_SCREEN_NAME_PLAN" || \
+   ! grep -Fq 'external working directory' "$REQUEST_SCREEN_NAME_PLAN"; then
+  printf '%s\n' "Twitter timeline request screen-name plan must record completed verification." >&2
+  exit 1
+fi
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'Noncanonical local usernames are rejected before timeline provider I/O' || \
+   ! grep -Fq 'Timeline request screen names must be canonical before provider I/O' "$ROOT_DIR/SECURITY.md" || \
+   ! grep -Fq 'Reject noncanonical timeline request names before provider I/O' "$VISION" || \
+   ! grep -Fq 'Rejected noncanonical timeline request screen names before provider I/O' "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Twitter timeline request screen-name documentation is incomplete." >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fq "bool(text.strip())" || \
+   ! grep -Fq 'make_status(text="  ")' "$VIEW_TESTS" || \
+   [ "$(grep -Fc 'make_status(text="  ")' "$VIEW_TESTS")" -ne 2 ]; then
+  printf '%s\n' "Twitter timeline text must retain nonblank helper and loader coverage." >&2
+  exit 1
+fi
+if [ ! -f "$TIMELINE_TEXT_PLAN" ] || \
+   ! grep -Fq 'Status: Completed' "$TIMELINE_TEXT_PLAN" || \
+   ! grep -Fq 'make check' "$TIMELINE_TEXT_PLAN" || \
+   ! grep -Fq 'hostile mutations' "$TIMELINE_TEXT_PLAN"; then
+  printf '%s\n' "Twitter timeline text plan must record completed verification." >&2
+  exit 1
+fi
+if ! tr '\n' ' ' < "$README" | tr -s '[:space:]' ' ' | grep -Fq 'blank timeline status text is rejected before template rendering' || \
+   ! grep -Fq 'Rejected blank Twitter timeline status text before template rendering' "$ROOT_DIR/CHANGES.md" || \
+   ! grep -Fq 'Reject blank provider timeline text before template rendering' "$VISION"; then
+  printf '%s\n' "Twitter timeline text guard documentation is incomplete." >&2
+  exit 1
+fi
+
+if [ "$(printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | grep -Fc "except Exception:")" -ne 1 ] ||
+  ! printf '%s\n' "$TIMELINE_STATUS_RENDERABLE" | awk '
+    /try:/ { guard = NR }
+    /status_id = getattr\(status, .id., None\)/ { status_read = NR }
+    /screen_name = getattr\(user, .screen_name., None\)/ { user_read = NR }
+    /except Exception:/ { rescue = NR }
+    /return None/ { rejected = NR }
+    END { exit guard && status_read > guard && user_read > status_read && rescue > user_read && rejected > rescue ? 0 : 1 }
+  ' ||
+  ! grep -Fq "class RaisingStatus:" "$VIEW_TESTS" ||
+  ! grep -Fq "class RaisingUser:" "$VIEW_TESTS" ||
+  ! grep -Fq "test_timeline_status_rejects_raising_accessors" "$VIEW_TESTS" ||
+  ! grep -Fq "return [make_status(), RaisingStatus()]" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline item validation must contain provider attribute failures with regression coverage." >&2
   exit 1
 fi
 
@@ -432,9 +717,35 @@ if ! grep -Fq "return [], None, True" "$VIEWS" ||
   exit 1
 fi
 
+if ! grep -Fq '{{s.screen_name}}' "$HOME_TEMPLATE" ||
+  grep -Fq '{{s.user.screen_name}}' "$HOME_TEMPLATE" ||
+  grep -Fq '|safe' "$HOME_TEMPLATE" ||
+  ! grep -Fq "test_load_twitter_home_snapshots_provider_accessors_once" "$VIEW_TESTS"; then
+  printf '%s\n' "Timeline rendering must use inert validated fields with Django autoescaping." >&2
+  exit 1
+fi
+
 if ! grep -Fq "status: completed" "$POST_REDIRECT_PLAN" ||
   ! grep -Fq "make check" "$POST_REDIRECT_PLAN"; then
   printf '%s\n' "Twitter POST/Redirect/GET plan must remain completed and verified." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq 'local `make check` passed' "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "external working directory" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "legacy dependency set remains unchanged" "$CHECKOUT_CREDENTIAL_PLAN" ||
+  ! grep -Fq "does not establish Django runtime compatibility" "$CHECKOUT_CREDENTIAL_PLAN"; then
+  printf '%s\n' "Checkout credential boundary plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "does not persist checkout credentials" "$README" ||
+  ! grep -Fq "does not persist checkout credentials" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "credential-free checkout" "$ROOT_DIR/VISION.md" ||
+  ! grep -Fq "Stopped GitHub Actions checkout credential persistence" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the checkout credential boundary." >&2
   exit 1
 fi
 
@@ -463,10 +774,90 @@ if ! grep -Fq "test_get_twitter_uses_environment_tokens_when_social_token_is_mal
   exit 1
 fi
 
+if ! grep -Fq "access_token = extra_data.get('access_token') if type(extra_data) is dict else None" "$VIEWS" ||
+  ! grep -Fq "test_get_twitter_uses_environment_tokens_when_extra_data_is_string" "$VIEW_TESTS" ||
+  ! grep -Fq "test_get_twitter_uses_environment_tokens_when_extra_data_is_list" "$VIEW_TESTS" ||
+  ! grep -Fq "test_get_twitter_does_not_mix_partial_social_and_environment_tokens" "$VIEW_TESTS" ||
+  ! grep -Fq "test_get_twitter_contains_social_metadata_accessor_failures" "$VIEW_TESTS" ||
+  ! grep -Fq "assert_environment_tokens_for_extra_data" "$VIEW_TESTS"; then
+  printf '%s\n' "Malformed social-auth metadata must preserve environment-token fallback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "non-mapping social-auth metadata" "$README" ||
+  ! grep -Fq "non-mapping saved social-auth metadata" "$VISION" ||
+  ! grep -Fq "Ignored non-mapping social-auth metadata" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document malformed social-auth metadata fallback." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$EXTRA_DATA_TYPE_PLAN" ||
+  ! grep -Fq "make check" "$EXTRA_DATA_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$EXTRA_DATA_TYPE_PLAN" ||
+  ! grep -Fq "no live Twitter" "$EXTRA_DATA_TYPE_PLAN"; then
+  printf '%s\n' "Social extra-data type-guard plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "malformed timeline results become an empty timeline" "$README" ||
+  ! grep -Fq "Malformed successful Twitter timeline results" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject malformed Twitter timeline result types" "$VISION" ||
+  ! grep -Fq "Contained malformed Twitter timeline results" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document malformed Twitter timeline containment." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$TIMELINE_TYPE_PLAN" ||
+  ! grep -Fq "make check" "$TIMELINE_TYPE_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$TIMELINE_TYPE_PLAN" ||
+  ! grep -Fq "no live Twitter" "$TIMELINE_TYPE_PLAN"; then
+  printf '%s\n' "Twitter timeline type-guard plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "malformed timeline items" "$README" ||
+  ! grep -Fq "reject the complete timeline" "$README" ||
+  ! grep -Fq "Malformed successful Twitter timeline items" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject malformed Twitter timeline items" "$VISION" ||
+  ! grep -Fq "Contained malformed Twitter timeline items" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document malformed Twitter timeline item containment." >&2
+  exit 1
+fi
+
+if ! grep -Fq "status: completed" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "make check" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "hostile mutations were rejected" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "no live" "$TIMELINE_ITEM_PLAN" ||
+  ! grep -Fq "Twitter request" "$TIMELINE_ITEM_PLAN"; then
+  printf '%s\n' "Twitter timeline item-guard plan must record completed verification." >&2
+  exit 1
+fi
+
+if ! grep -Fq "provider attributes raise during validation" "$README" ||
+  ! grep -Fq "Provider-controlled attribute failures" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Contain provider-controlled timeline attribute failures" "$VISION" ||
+  ! grep -Fq "Contained exceptions raised by provider-controlled timeline" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document Twitter timeline attribute exception containment." >&2
+  exit 1
+fi
+
 if ! grep -Fq "test_get_twitter_raises_configuration_error_when_access_tokens_are_missing" "$VIEW_TESTS"; then
   printf '%s\n' "View helper tests must cover missing Twitter access token configuration errors." >&2
   exit 1
 fi
+
+for timeline_accessor_plan_contract in \
+  "Status: Completed" \
+  "Verification: Completed" \
+  "Python 3.12.8 and Python 3.14.0" \
+  "Eight focused hostile mutations" \
+  "no actionable issues" \
+  "This change claims no live Django or Twitter provider execution"; do
+  if ! grep -Fq "$timeline_accessor_plan_contract" "$TIMELINE_ACCESSOR_PLAN"; then
+    printf '%s\n' "Twitter timeline accessor plan must record completed evidence: $timeline_accessor_plan_contract" >&2
+    exit 1
+  fi
+done
 
 if ! grep -Fq "extra_data.get('access_token')" "$VIEWS"; then
   printf '%s\n' "get_twitter must read optional social OAuth token data without KeyError." >&2
@@ -478,7 +869,7 @@ if ! grep -Fq "def normalize_token" "$VIEWS"; then
   exit 1
 fi
 
-if ! grep -Fq "STRING_TYPES" "$VIEWS" || ! grep -Fq "not isinstance(value, STRING_TYPES)" "$VIEWS"; then
+if ! grep -Fq "STRING_TYPES" "$VIEWS" || ! grep -Fq "type(value) not in STRING_TYPES" "$VIEWS"; then
   printf '%s\n' "get_twitter must ignore malformed non-string credential values." >&2
   exit 1
 fi
@@ -494,8 +885,153 @@ if grep -Fq "raise Exception('No user for twitter API call')" "$VIEWS" ||
   exit 1
 fi
 
-python3 -m py_compile "$SETTINGS" "$VIEWS" "$VIEW_TESTS"
-python3 "$ROOT_DIR/scripts/test-settings-helpers.py"
-python3 "$VIEW_TESTS"
+if ! grep -Fq "TIMELINE_STATUS_LIMIT = 10" "$VIEWS" ||
+  ! grep -Fq "len(statuses) > TIMELINE_STATUS_LIMIT" "$VIEWS" ||
+  ! grep -Fq "test_load_twitter_home_accepts_exact_timeline_limit" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_timeline_results" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline result limit must retain implementation and focused coverage." >&2
+  exit 1
+fi
+
+for timeline_result_limit_contract in \
+  "status: completed" \
+  "## Status: Completed" \
+  "## Verification Completed" \
+  "hostile mutations were rejected"; do
+  if ! grep -Fq "$timeline_result_limit_contract" "$TIMELINE_RESULT_LIMIT_PLAN"; then
+    printf '%s\n' "Twitter timeline result-limit plan must record completed evidence: $timeline_result_limit_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Oversized timeline results" "$README" ||
+  ! grep -Fq "Oversized successful Twitter timeline collections" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject oversized Twitter timeline collections" "$VISION" ||
+  ! grep -Fq "Rejected oversized Twitter timeline collections" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline result limit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "len(text) <= MAX_STATUS_LENGTH" "$VIEWS" ||
+  ! grep -Fq "test_timeline_status_accepts_exact_text_limit" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_timeline_text" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_preserves_post_error_for_oversized_timeline_text" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline text limit must retain implementation and focused coverage." >&2
+  exit 1
+fi
+
+for timeline_text_limit_contract in \
+  "status: completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "hostile mutations" \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$timeline_text_limit_contract" "$TIMELINE_TEXT_LIMIT_PLAN"; then
+    printf '%s\n' "Twitter timeline text-limit plan must record completed evidence: $timeline_text_limit_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Provider timeline text longer than 280 characters" "$README" ||
+  ! grep -Fq "Oversized provider-controlled Twitter timeline text" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject oversized provider timeline text" "$VISION" ||
+  ! grep -Fq "Rejected oversized provider timeline text" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline text limit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "MAX_TWITTER_STATUS_ID = (1 << 64) - 1" "$VIEWS" ||
+  ! grep -Fq "status_id <= MAX_TWITTER_STATUS_ID" "$VIEWS" ||
+  ! grep -Fq "test_timeline_status_bounds_unsigned_64_bit_ids" "$VIEW_TESTS" ||
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_status_ids" "$VIEW_TESTS" ||
+  ! grep -Fq "views.MAX_TWITTER_STATUS_ID + 1" "$VIEW_TESTS" ||
+  ! grep -Fq "status_id=10**5000" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline status ID limit must retain implementation and focused coverage." >&2
+  exit 1
+fi
+
+for timeline_status_id_limit_contract in \
+  "Status: Completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "Seven hostile mutations" \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$timeline_status_id_limit_contract" "$TIMELINE_STATUS_ID_LIMIT_PLAN"; then
+    printf '%s\n' "Twitter timeline status-ID plan must record completed evidence: $timeline_status_id_limit_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Provider timeline status IDs outside the unsigned 64-bit range" "$README" ||
+  ! grep -Fq "Oversized provider-controlled Twitter status IDs" "$ROOT_DIR/SECURITY.md" ||
+  ! grep -Fq "Reject provider timeline status IDs outside unsigned 64-bit range" "$VISION" ||
+  ! grep -Fq "Rejected provider timeline status IDs outside the unsigned 64-bit range" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline status ID limit." >&2
+  exit 1
+fi
+
+if ! grep -Fq "def twitter_text_is_utf8_encodable(value):" "$VIEWS" || \
+  ! grep -Fq "value.encode('utf-8')" "$VIEWS" || \
+  ! grep -Fq "except UnicodeError:" "$VIEWS" || \
+  ! grep -Fq "twitter_text_is_utf8_encodable(text)" "$VIEWS" || \
+  ! grep -Fq "test_timeline_status_rejects_lone_surrogates" "$VIEW_TESTS" || \
+  ! grep -Fq "test_timeline_status_preserves_valid_supplementary_text" "$VIEW_TESTS" || \
+  ! grep -Fq "test_load_twitter_home_rejects_lone_surrogate_text" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter timeline text must retain UTF-8 encodability coverage." >&2
+  exit 1
+fi
+
+for timeline_text_surrogate_contract in \
+  "Status: Completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "hostile mutations" \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$timeline_text_surrogate_contract" "$TIMELINE_TEXT_SURROGATE_PLAN"; then
+    printf '%s\n' "Twitter timeline surrogate plan must record completed evidence: $timeline_text_surrogate_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "Lone-surrogate provider timeline text" "$README" || \
+  ! grep -Fq "Unencodable provider-controlled Twitter timeline text" "$ROOT_DIR/SECURITY.md" || \
+  ! grep -Fq "Reject provider timeline text that cannot be encoded as UTF-8" "$VISION" || \
+  ! grep -Fq "Rejected lone-surrogate provider timeline text" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter timeline surrogate guard." >&2
+  exit 1
+fi
+
+if ! grep -Fq "not twitter_text_is_utf8_encodable(status)" "$VIEWS" || \
+  ! grep -Fq "test_normalize_status_rejects_lone_surrogates" "$VIEW_TESTS" || \
+  ! grep -Fq "test_normalize_status_preserves_valid_supplementary_text" "$VIEW_TESTS" || \
+  ! grep -Fq "test_home_does_not_post_lone_surrogate_status" "$VIEW_TESTS" || \
+  ! grep -Fq "unencodable status must not reach Twitter" "$VIEW_TESTS"; then
+  printf '%s\n' "Twitter status text must retain UTF-8 encodability coverage." >&2
+  exit 1
+fi
+
+for status_text_surrogate_contract in \
+  "Status: Completed" \
+  "repository-root and external-directory \`make check\` passed" \
+  "hostile mutations" \
+  "f1c6886b97c59fcb8d54ac966691adec00d3b95d" \
+  'push run `27567084975`' \
+  'pull-request run `27567095220`' \
+  "No live Django, database, OAuth, browser, or Twitter execution was performed"; do
+  if ! grep -Fq "$status_text_surrogate_contract" "$STATUS_TEXT_SURROGATE_PLAN"; then
+    printf '%s\n' "Twitter status surrogate plan must record completed evidence: $status_text_surrogate_contract" >&2
+    exit 1
+  fi
+done
+
+if ! grep -Fq "rejection of lone-surrogate status text before provider writes" "$README" || \
+  ! grep -Fq "Unencodable user-authored Twitter status text" "$ROOT_DIR/SECURITY.md" || \
+  ! grep -Fq "Reject status text that cannot be encoded as UTF-8 before provider writes" "$VISION" || \
+  ! grep -Fq "Rejected lone-surrogate status text before provider writes" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must document the Twitter status surrogate guard." >&2
+  exit 1
+fi
+
+run_python -m py_compile "$SETTINGS" "$VIEWS" "$WORKFLOW_CHECKER" "$VIEW_TESTS" "$WORKFLOW_TESTS"
+run_python "$ROOT_DIR/scripts/test-settings-helpers.py"
+run_python "$VIEW_TESTS"
+run_python "$WORKFLOW_TESTS"
 
 printf '%s\n' "Django settings security baseline checks passed."
