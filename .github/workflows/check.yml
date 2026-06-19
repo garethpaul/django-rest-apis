@@ -24,7 +24,72 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: make check
+      - name: Verify closed repository contract
+        shell: /usr/bin/bash --noprofile --norc -euo pipefail {0}
+        run: |
+          PATH=/usr/bin:/bin
+          export PATH
+          python_path=$(/usr/bin/realpath /usr/bin/python3)
+          git_path=$(/usr/bin/realpath /usr/bin/git)
+          docker_path=$(/usr/bin/realpath /usr/bin/docker)
+          env_path=$(/usr/bin/realpath /usr/bin/env)
+          "$python_path" -I -S scripts/check-workflow-checkout.py tools \
+            "$python_path" "$git_path" "$docker_path" "$env_path" \
+            /usr/bin/bash /usr/bin/realpath /usr/bin/rm /usr/bin/mkdir
+          contract_dir="$RUNNER_TEMP/django-rest-actions-contract"
+          /usr/bin/rm -rf "$contract_dir"
+          /usr/bin/mkdir -p "$contract_dir/build"
+          TRUSTED_GIT="$git_path" \
+          "$env_path" -u PYTHONPATH -u PYTHONHOME -u MAKEFILES -u MAKEFLAGS \
+            -u MFLAGS -u GNUMAKEFLAGS \
+            PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 \
+            "$python_path" -I -S scripts/check-workflow-checkout.py prepare \
+            "$GITHUB_WORKSPACE" "$contract_dir"
+          /usr/bin/printf '%s\n' \
+            'ARG PYTHON_VERSION' \
+            'FROM python:${PYTHON_VERSION}-slim-bookworm' \
+            'RUN apt-get update && apt-get install -y --no-install-recommends git make && rm -rf /var/lib/apt/lists/*' \
+            'USER 65534:65534' \
+            'ENV HOME=/tmp PATH=/usr/local/bin:/usr/bin:/bin PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1' \
+            > "$contract_dir/build/Dockerfile"
+          image="django-rest-contract:${{ github.run_id }}-${{ matrix.python-version }}"
+          "$docker_path" build --pull \
+            --build-arg "PYTHON_VERSION=${{ matrix.python-version }}" \
+            --tag "$image" "$contract_dir/build"
+
+          # Run copied contract tests without source or verifier mounts.
+          "$docker_path" run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --user 65534:65534 \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=128m \
+            --volume "$contract_dir/tests/repository:/workspace:ro" \
+            --workdir /workspace "$image" \
+            /usr/local/bin/python3 -I -S scripts/test-workflow-checkout.py
+
+          # Verify source before Make from an isolated verifier-only container.
+          "$docker_path" run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --user 65534:65534 \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=32m \
+            --env TRUSTED_GIT=/usr/bin/git \
+            --volume "$GITHUB_WORKSPACE:/source:ro" \
+            --volume "$contract_dir/verifier/repository:/verifier:ro" \
+            --volume "$contract_dir/snapshot.json:/snapshot.json:ro" \
+            "$image" /usr/local/bin/python3 -I -S \
+            /verifier/scripts/check-workflow-checkout.py verify /source /snapshot.json
+
+          "$docker_path" run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --user 65534:65534 \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=128m \
+            --volume "$contract_dir/tests/repository:/workspace:ro" \
+            --workdir /workspace "$image" \
+            /usr/bin/make -C /workspace -f /workspace/Makefile check
+
+          # Revalidate source after Make with the untouched verifier copy.
+          "$docker_path" run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --user 65534:65534 \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=32m \
+            --env TRUSTED_GIT=/usr/bin/git \
+            --volume "$GITHUB_WORKSPACE:/source:ro" \
+            --volume "$contract_dir/verifier/repository:/verifier:ro" \
+            --volume "$contract_dir/snapshot.json:/snapshot.json:ro" \
+            "$image" /usr/local/bin/python3 -I -S \
+            /verifier/scripts/check-workflow-checkout.py verify /source /snapshot.json
