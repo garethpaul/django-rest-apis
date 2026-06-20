@@ -30,8 +30,10 @@ read-only permissions, supported Python matrix, and existing verification path.
   tracked file with its permission mode, index-stage metadata, and committed
   tree identity, then create exact separate test and verifier copies.
 - Preserve each tracked mode in both copies and validate byte/mode equality
-  before containers. Reject a source or prepared
-  `scripts/check-baseline.sh` without its tracked executable bit.
+  before containers. Require regular-file Git index modes, reject materialized
+  Git symlinks even when `core.symlinks=false`, and reject a source or prepared
+  `scripts/check-baseline.sh` unless both Git and the host expose its executable
+  bit.
 - Run candidate tests and Make as non-root users in separate no-network,
   read-only, capability-free containers. The test container receives only the
   test copy; it must not mount the source, verifier, snapshot, or host tools.
@@ -52,7 +54,7 @@ read-only permissions, supported Python matrix, and existing verification path.
 ## Verification
 
 - The local `make check` passed with all seven settings, thirteen view tests,
-  and twenty-nine canonical Actions/Makefile-contract tests.
+  and thirty-two canonical Actions/Makefile-contract tests.
 - The same gate passed from an external working directory.
 - Workflow and local-action hostile mutations were rejected by the baseline
   guard, including every adversarial YAML spelling from independent review,
@@ -64,7 +66,9 @@ read-only permissions, supported Python matrix, and existing verification path.
   tracked blob/index/tree mutation, verifier timing mutation, fake writable
   `PATH` tools, `GNUmakefile`/lowercase `makefile` shadows, includes, and every
   Make environment injection including `GNUMAKEFLAGS=-n`, plus prepared-copy
-  mode loss and a non-executable tracked baseline.
+  mode loss, a non-executable tracked baseline, a hidden non-executable Git
+  index mode under `core.filemode=false`, and a Git symlink materialized as a
+  regular file under `core.symlinks=false`.
 - `git diff --check` and shell syntax validation passed.
 
 ## Maintenance Contract
