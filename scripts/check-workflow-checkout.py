@@ -297,6 +297,23 @@ def tracked_paths(repository):
     return [Path(value.decode("utf-8")) for value in output.split(b"\0") if value]
 
 
+def tracked_index_modes(repository):
+    output = run_git(repository, ["ls-files", "--stage", "-z"])
+    modes = {}
+    for record in output.split(b"\0"):
+        if not record:
+            continue
+        metadata, separator, path = record.partition(b"\t")
+        fields = metadata.split()
+        if not separator or len(fields) != 3 or fields[2] != b"0":
+            raise ValueError("Tracked index metadata is malformed or unmerged.")
+        relative = path.decode("utf-8")
+        if relative in modes:
+            raise ValueError("Tracked index contains duplicate path: {}.".format(relative))
+        modes[relative] = fields[0].decode("ascii")
+    return modes, output
+
+
 def tracked_snapshot(repository):
     files = {}
     for relative in tracked_paths(repository):
@@ -310,14 +327,32 @@ def tracked_snapshot(repository):
             )
         mode = stat.S_IMODE(os.lstat(path).st_mode)
         files[relative.as_posix()] = {"sha256": sha256(path), "mode": mode}
+    index_modes, index = tracked_index_modes(repository)
+    if set(index_modes) != set(files):
+        raise ValueError("Tracked index paths do not match the materialized tree.")
+    invalid_index_modes = sorted(
+        relative
+        for relative, mode in index_modes.items()
+        if mode not in ("100644", "100755")
+    )
+    if invalid_index_modes:
+        raise ValueError(
+            "Tracked-tree entries must use regular-file Git modes: {}.".format(
+                ", ".join(invalid_index_modes)
+            )
+        )
     baseline = files.get("scripts/check-baseline.sh")
-    if not baseline or not baseline["mode"] & stat.S_IXUSR:
+    if index_modes.get("scripts/check-baseline.sh") != "100755":
         raise ValueError(
             "scripts/check-baseline.sh must retain tracked executable mode."
         )
+    if not baseline or not baseline["mode"] & stat.S_IXUSR:
+        raise ValueError(
+            "scripts/check-baseline.sh must be executable in the materialized tree."
+        )
     return {
         "files": files,
-        "index": sha256_bytes(run_git(repository, ["ls-files", "-s", "-z"])),
+        "index": sha256_bytes(index),
         "tree": run_git(repository, ["rev-parse", "HEAD^{tree}"])
         .decode("ascii")
         .strip(),

@@ -601,6 +601,132 @@ class CanonicalActionsContractTests(unittest.TestCase):
             self.assertNotEqual(0, result.returncode)
             self.assertIn("executable mode", result.stderr)
 
+    def test_prepare_rejects_non_executable_index_mode_with_executable_worktree(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository = Path(temporary_directory) / "repository"
+            shutil.copytree(
+                ROOT,
+                repository,
+                ignore=shutil.ignore_patterns(".git", "__pycache__"),
+                copy_function=shutil.copy2,
+            )
+            subprocess.run(["git", "init", "-q", str(repository)], check=True)
+            subprocess.run(["git", "-C", str(repository), "add", "--all"], check=True)
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "update-index",
+                    "--chmod=-x",
+                    "scripts/check-baseline.sh",
+                ],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(repository), "config", "core.filemode", "false"],
+                check=True,
+            )
+            (repository / "scripts" / "check-baseline.sh").chmod(0o755)
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "-c",
+                    "user.name=Contract Test",
+                    "-c",
+                    "user.email=contract@example.invalid",
+                    "commit",
+                    "-qm",
+                    "snapshot",
+                ],
+                check=True,
+            )
+            result = subprocess.run(
+                [
+                    *SANITIZED_PYTHON,
+                    str(CHECKER),
+                    "prepare",
+                    str(repository),
+                    str(Path(temporary_directory) / "contract"),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=sanitized_environment(
+                    {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+                ),
+            )
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("tracked executable mode", result.stderr)
+
+    def test_prepare_rejects_git_symlink_materialized_as_regular_file(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository = Path(temporary_directory) / "repository"
+            shutil.copytree(
+                ROOT,
+                repository,
+                ignore=shutil.ignore_patterns(".git", "__pycache__"),
+                copy_function=shutil.copy2,
+            )
+            subprocess.run(["git", "init", "-q", str(repository)], check=True)
+            subprocess.run(["git", "-C", str(repository), "add", "--all"], check=True)
+            fixture = "scripts/trusted-git-fixture.sh"
+            blob = subprocess.run(
+                ["git", "-C", str(repository), "hash-object", fixture],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "update-index",
+                    "--cacheinfo",
+                    "120000,{},{}".format(blob, fixture),
+                ],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(repository), "config", "core.symlinks", "false"],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(repository),
+                    "-c",
+                    "user.name=Contract Test",
+                    "-c",
+                    "user.email=contract@example.invalid",
+                    "commit",
+                    "-qm",
+                    "snapshot",
+                ],
+                check=True,
+            )
+            result = subprocess.run(
+                [
+                    *SANITIZED_PYTHON,
+                    str(CHECKER),
+                    "prepare",
+                    str(repository),
+                    str(Path(temporary_directory) / "contract"),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=sanitized_environment(
+                    {"TRUSTED_GIT": str(Path("/usr/bin/git").resolve())}
+                ),
+            )
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn("regular-file Git modes", result.stderr)
+
     def test_prepare_uses_command_local_safe_directory_for_every_git_call(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary_root = Path(temporary_directory)

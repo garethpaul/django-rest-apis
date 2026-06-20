@@ -11,6 +11,9 @@
   copied accepted timeline fields into inert dictionaries before rendering.
 - Recorded that Django 1.6.11 has 18 known vulnerabilities and that this
   archival repository is unsuitable for live deployment.
+- Made checkout mode tests independent of host umask while requiring the
+  baseline executable bit in both Git and the materialized tree, and rejecting
+  Git symlinks hidden by `core.symlinks=false`.
 
 ## 2026-06-15
 
