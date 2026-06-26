@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-26
+
+- Made checkout-copy parent-directory assertions portable to owner-only source
+  workspaces while retaining the required owner traversal permission.
+- Added an explicit `0700` repository/scripts regression so the test no longer
+  depends on the host checkout's incidental directory modes.
+
 ## 2026-06-19
 
 - Required a non-blank configured `DJANGO_SECRET_KEY` in debug and production,

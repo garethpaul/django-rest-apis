@@ -39,6 +39,7 @@ STATUS_TEXT_SURROGATE_PLAN="$ROOT_DIR/docs/plans/2026-06-15-twitter-status-text-
 MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md"
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
+PARENT_EXECUTE_PLAN="$ROOT_DIR/docs/plans/2026-06-26-portable-parent-execute-check.md"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 WORKFLOW_CHECKER="$ROOT_DIR/scripts/check-workflow-checkout.py"
@@ -101,12 +102,24 @@ for path in \
   "docs/plans/2026-06-15-twitter-status-text-surrogate-guard.md" \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-django-runtime-verification.md" \
+  "docs/plans/2026-06-26-portable-parent-execute-check.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
   "docs/plans/2026-06-09-twitter-blank-token-fallback.md" \
   "scripts/check-baseline.sh"; do
   require_file "$path"
+done
+
+for parent_execute_contract in \
+  "Status: Completed" \
+  "owner-only directory regression passed" \
+  "make check" \
+  "hostile all-execute-bit mutation was rejected"; do
+  if ! grep -Fq "$parent_execute_contract" "$PARENT_EXECUTE_PLAN"; then
+    printf '%s\n' "Parent execute plan must record completed evidence: $parent_execute_contract" >&2
+    exit 1
+  fi
 done
 
 for runtime_contract in \

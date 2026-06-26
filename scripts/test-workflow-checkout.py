@@ -501,6 +501,8 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 ignore=shutil.ignore_patterns(".git", "__pycache__"),
                 copy_function=shutil.copy2,
             )
+            repository.chmod(0o700)
+            (repository / "scripts").chmod(0o700)
             subprocess.run(["git", "init", "-q", str(repository)], check=True)
             subprocess.run(["git", "-C", str(repository), "add", "--all"], check=True)
             subprocess.run(
@@ -553,7 +555,7 @@ class CanonicalActionsContractTests(unittest.TestCase):
                 )
                 for parent in (copied_script.parent, copied_script.parent.parent):
                     parent_mode = stat.S_IMODE(os.lstat(parent).st_mode)
-                    self.assertEqual(0o111, parent_mode & 0o111)
+                    self.assertNotEqual(0, parent_mode & stat.S_IXUSR)
 
     def test_prepare_rejects_non_executable_tracked_baseline(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
