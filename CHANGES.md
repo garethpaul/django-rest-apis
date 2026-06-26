@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-06-26 — Document historical Python and Django compatibility
+
+- Replaced the vague era-based Python prerequisite with Django 1.6's official
+  Python 2.6.5+, 2.7, 3.2, and 3.3 compatibility boundary.
+- Documented that all listed interpreter/framework versions are unsupported
+  today and that the repository declares no maintained secure Django runtime.
+- Kept the Python 3.10, 3.12, and 3.14 matrix explicitly source/helper-only;
+  portable checks are not evidence that Django 1.6 runs on modern Python.
+- Added aligned README, runtime-matrix, security, vision, completed-plan, and
+  fail-closed baseline evidence.
+- Validation: repository and external-directory `make check` passed; no Django,
+  database, browser, OAuth, provider, or live Twitter runtime was claimed.
+- Three README, runtime-matrix, and completed-plan mutations were rejected by
+  the fail-closed baseline; current-tree and 97-commit secret scans were clean.
+
 ## 2026-06-26
 
 - Made checkout-copy parent-directory assertions portable to owner-only source

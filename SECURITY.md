@@ -97,6 +97,8 @@ The Python matrix validates dependency-free source contracts; it is not
 evidence that the historical Django runtime is compatible with those Python
 releases or free from known dependency vulnerabilities. The direct audit is
 explicitly not clean: Django 1.6.11 has 18 known vulnerabilities.
+Official Django 1.6 compatibility was limited to Python 2.6.5+, 2.7, 3.2, and
+3.3; those interpreter series and the framework are unsupported today.
 
 ## Dependency and Supply Chain Security
 
