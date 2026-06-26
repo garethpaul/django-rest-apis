@@ -21,6 +21,8 @@ Priority:
 - Avoid committing Twitter keys, access tokens, or local settings secrets
 - Require a non-blank Django secret in every mode
 - Preserve the documented legacy setup for Django, south, Fabric, and python-twitter
+- Keep the historical Django 1.6 Python 2.6.5/2.7/3.2/3.3 compatibility
+  boundary distinct from modern dependency-free CI
 - Keep account-changing actions behind POST and CSRF protection
 - Redirect after successful status posts so browser refreshes cannot resubmit
   account-changing requests
@@ -57,7 +59,6 @@ Priority:
 Next priorities:
 
 - Keep credentials out of tracked settings and covered by the baseline guard
-- Add README notes for supported Python and Django versions
 - Modernize Django and dependency usage in a dedicated pass
 - Keep tests around OAuth configuration boundaries and API wrappers
 

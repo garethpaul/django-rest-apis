@@ -35,7 +35,8 @@ Additional scan context:
 ### Prerequisites
 
 - Git
-- Python matching the era of the project
+- For historical reproduction only: Python 2.6.5+, 2.7, 3.2, or 3.3 with the
+  preserved Django 1.6 dependency range
 
 ### Setup
 
@@ -57,6 +58,18 @@ archival reference; a runnable framework upgrade requires a dedicated
 migration of Django settings, social authentication, templates, URLs,
 migrations, and deployment tooling. The supported modern verification path is
 the isolated standard-library helper suite behind `make check`.
+
+### Historical Runtime Compatibility
+
+The official [Django 1.6 release notes](https://docs.djangoproject.com/en/2.2/releases/1.6/#python-compatibility)
+list Python 2.6.5 or newer in the 2.6 series, Python 2.7, Python 3.2, and Python
+3.3 as supported; Python 3.4 is explicitly unsupported. Those interpreter and
+framework versions are historical and unsupported today. This repository does
+not declare a maintained or secure Django runtime.
+
+The Python 3.10, 3.12, and 3.14 matrix runs dependency-free source and helper
+checks only. Passing it is not evidence that Django 1.6 or the preserved
+social-auth stack runs on modern Python.
 
 An exact direct-dependency audit of the preserved upper-bound stack selected
 Django 1.6.11 and reported **18 known vulnerabilities in Django**. This
@@ -215,6 +228,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   submission prevention.
 - See `docs/plans/2026-06-10-production-secure-cookies.md` for production
   session and CSRF cookie transport protection.
+- See `docs/plans/2026-06-26-historical-python-django-support.md` for the exact
+  archived interpreter/framework compatibility boundary.
 
 ## Contributing
 

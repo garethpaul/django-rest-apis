@@ -40,6 +40,7 @@ MAKE_ROOT_PLAN="$ROOT_DIR/docs/plans/2026-06-14-make-root-override-protection.md
 RUNTIME_VERIFICATION="$ROOT_DIR/RUNTIME_VERIFICATION.md"
 RUNTIME_VERIFICATION_PLAN="$ROOT_DIR/docs/plans/2026-06-14-django-runtime-verification.md"
 PARENT_EXECUTE_PLAN="$ROOT_DIR/docs/plans/2026-06-26-portable-parent-execute-check.md"
+HISTORICAL_RUNTIME_PLAN="$ROOT_DIR/docs/plans/2026-06-26-historical-python-django-support.md"
 MAKEFILE="$ROOT_DIR/Makefile"
 VIEW_TESTS="$ROOT_DIR/scripts/test-view-helpers.py"
 WORKFLOW_CHECKER="$ROOT_DIR/scripts/check-workflow-checkout.py"
@@ -103,6 +104,7 @@ for path in \
   "docs/plans/2026-06-14-make-root-override-protection.md" \
   "docs/plans/2026-06-14-django-runtime-verification.md" \
   "docs/plans/2026-06-26-portable-parent-execute-check.md" \
+  "docs/plans/2026-06-26-historical-python-django-support.md" \
   "docs/plans/2026-06-12-checkout-credential-boundary.md" \
   "docs/plans/2026-06-09-twitter-malformed-token-fallback.md" \
   "docs/plans/2026-06-09-twitter-social-auth-row-fallback.md" \
@@ -1041,6 +1043,29 @@ if ! grep -Fq "rejection of lone-surrogate status text before provider writes" "
   printf '%s\n' "Project guidance must document the Twitter status surrogate guard." >&2
   exit 1
 fi
+
+if ! grep -Fq "Python 2.6.5+, 2.7, 3.2, or 3.3" "$README" || \
+  ! grep -Fq "not evidence that Django 1.6" "$README" || \
+  ! grep -Fq "Python 2.6.5+, 2.7, 3.2, and 3.3" "$RUNTIME_VERIFICATION" || \
+  ! grep -Fq "unsupported today" "$ROOT_DIR/SECURITY.md" || \
+  ! grep -Fq "historical Django 1.6 Python 2.6.5/2.7/3.2/3.3" "$VISION" || \
+  ! grep -Fq "Document historical Python and Django compatibility" "$ROOT_DIR/CHANGES.md"; then
+  printf '%s\n' "Project guidance must distinguish historical Django compatibility from modern portable checks." >&2
+  exit 1
+fi
+
+for historical_runtime_contract in \
+  "status: completed" \
+  "Django>=1.6,<1.7" \
+  "Python 2.6.5" \
+  "Python 3.10, 3.12, and 3.14" \
+  "Repository and external-directory \`make check\` passed" \
+  "No Django server, database, browser, OAuth, provider, or live Twitter runtime"; do
+  if ! grep -Fq "$historical_runtime_contract" "$HISTORICAL_RUNTIME_PLAN"; then
+    printf '%s\n' "Historical runtime plan must record completed evidence: $historical_runtime_contract" >&2
+    exit 1
+  fi
+done
 
 run_python -m py_compile "$SETTINGS" "$VIEWS" "$WORKFLOW_CHECKER" "$VIEW_TESTS" "$WORKFLOW_TESTS"
 run_python "$ROOT_DIR/scripts/test-settings-helpers.py"

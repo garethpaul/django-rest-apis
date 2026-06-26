@@ -14,6 +14,10 @@ Dependency security status: direct pinned audit selected Django 1.6.11 and
 reported 18 known vulnerabilities. The repository is unsuitable for live
 deployment and no audit-clean claim is made.
 
+Historical compatibility status: Django 1.6 documented support for
+Python 2.6.5+, 2.7, 3.2, and 3.3. The portable Python 3.10/3.12/3.14 matrix does not
+install Django and is not framework-runtime compatibility evidence.
+
 | # | Scenario | Boundary | Required sanitized evidence | Status |
 |---|---|---|---|---|
 | 1 | Environment isolation | Local runtime | Python and dependency versions; isolated environment identifier | not run |
