@@ -2,6 +2,7 @@
 import importlib.util
 import os
 import pathlib
+import re
 import sys
 import types
 import unittest
@@ -9,6 +10,11 @@ import unittest
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parents[1]
 SETTINGS_PATH = ROOT_DIR / "app" / "settings.py"
+
+# settings.py can raise ImproperlyConfigured from the SECRET_KEY guard or from
+# require_env. Pin each fixture to its own message so a bare exception type
+# cannot let one guard stand in for another.
+SECRET_KEY_ERROR = "DJANGO_SECRET_KEY must be set to a non-blank value."
 
 
 class ImproperlyConfigured(Exception):
@@ -46,15 +52,15 @@ def load_settings(env):
 
 class SettingsHelperTests(unittest.TestCase):
     def test_production_requires_secret_key(self):
-        with self.assertRaises(ImproperlyConfigured):
+        with self.assertRaisesRegex(ImproperlyConfigured, re.escape(SECRET_KEY_ERROR)):
             load_settings({"DJANGO_DEBUG": "0"})
 
     def test_debug_mode_requires_secret_key(self):
-        with self.assertRaises(ImproperlyConfigured):
+        with self.assertRaisesRegex(ImproperlyConfigured, re.escape(SECRET_KEY_ERROR)):
             load_settings({"DJANGO_DEBUG": "1"})
 
     def test_whitespace_secret_key_is_rejected(self):
-        with self.assertRaises(ImproperlyConfigured):
+        with self.assertRaisesRegex(ImproperlyConfigured, re.escape(SECRET_KEY_ERROR)):
             load_settings({"DJANGO_SECRET_KEY": "   \t"})
 
     def test_debug_mode_uses_configured_secret_key(self):
