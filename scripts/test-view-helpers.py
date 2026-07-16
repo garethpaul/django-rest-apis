@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import importlib.util
 import pathlib
+import re
 import sys
 import types
 import unittest
@@ -8,6 +9,12 @@ import unittest
 
 ROOT_DIR = pathlib.Path(__file__).resolve().parents[1]
 VIEWS_PATH = ROOT_DIR / "home" / "views.py"
+
+# get_twitter raises ImproperlyConfigured from two sibling guards. A bare
+# assertRaises(ImproperlyConfigured) cannot tell them apart, so each fixture
+# below is pinned to its OWN guard's message with assertRaisesRegex.
+CONSUMER_CREDENTIAL_ERROR = "Twitter consumer key and secret must be configured"
+ACCESS_TOKEN_ERROR = "Twitter access token and secret must be configured"
 
 
 class ImproperlyConfigured(Exception):
@@ -119,6 +126,18 @@ def make_rendered_status(status_id=42, text="existing status", screen_name="samp
         "text": text,
         "screen_name": screen_name,
     }
+
+
+class MissingUserSocialAuth:
+    """Stands in for UserSocialAuth when the user has no stored twitter row."""
+
+    class DoesNotExist(Exception):
+        pass
+
+    class objects:
+        @staticmethod
+        def get(user, provider):
+            raise MissingUserSocialAuth.DoesNotExist()
 
 
 class RaisingStatus:
@@ -992,12 +1011,86 @@ class ViewHelperTests(unittest.TestCase):
             views.settings.TWITTER_ACCESS_TOKEN_SECRET = ""
 
             user = types.SimpleNamespace(username="sample-user")
-            with self.assertRaises(ImproperlyConfigured):
+            with self.assertRaisesRegex(
+                ImproperlyConfigured, re.escape(ACCESS_TOKEN_ERROR)
+            ):
                 views.get_twitter(user)
         finally:
             views.UserSocialAuth = original_user_social_auth
             views.settings.TWITTER_ACCESS_TOKEN = original_access_token
             views.settings.TWITTER_ACCESS_TOKEN_SECRET = original_access_token_secret
+
+    def assert_consumer_credentials_are_required(self, **overrides):
+        """get_twitter must reject blank consumer credentials before provider I/O.
+
+        twitter.Api is stubbed with a fake that cannot fail, so a defeated guard
+        reports "ImproperlyConfigured not raised" rather than being caught
+        incidentally by the default `twitter.Api = object` stub raising TypeError.
+        """
+        constructed = []
+
+        def fake_api(**kwargs):
+            constructed.append(kwargs)
+            return types.SimpleNamespace(**kwargs)
+
+        original_user_social_auth = views.UserSocialAuth
+        original_api = views.twitter.Api
+        originals = {
+            name: getattr(views.settings, name) for name in overrides
+        }
+
+        try:
+            views.UserSocialAuth = MissingUserSocialAuth
+            views.twitter.Api = fake_api
+            for name, value in overrides.items():
+                setattr(views.settings, name, value)
+
+            user = types.SimpleNamespace(username="sample-user")
+            with self.assertRaisesRegex(
+                ImproperlyConfigured, re.escape(CONSUMER_CREDENTIAL_ERROR)
+            ):
+                views.get_twitter(user)
+            self.assertEqual(
+                constructed, [], "twitter.Api must not be built with blank credentials"
+            )
+        finally:
+            views.UserSocialAuth = original_user_social_auth
+            views.twitter.Api = original_api
+            for name, value in originals.items():
+                setattr(views.settings, name, value)
+
+    def test_get_twitter_rejects_missing_consumer_key(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_KEY="")
+
+    def test_get_twitter_rejects_blank_consumer_key(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_KEY="   \t")
+
+    def test_get_twitter_rejects_none_consumer_key(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_KEY=None)
+
+    def test_get_twitter_rejects_nonstring_consumer_key(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_KEY=1234)
+
+    def test_get_twitter_rejects_missing_consumer_secret(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_SECRET="")
+
+    def test_get_twitter_rejects_blank_consumer_secret(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_SECRET="   \t")
+
+    def test_get_twitter_rejects_none_consumer_secret(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_SECRET=None)
+
+    def test_get_twitter_rejects_nonstring_consumer_secret(self):
+        self.assert_consumer_credentials_are_required(SOCIAL_AUTH_TWITTER_SECRET=1234)
+
+    def test_get_twitter_reports_consumer_credentials_before_access_tokens(self):
+        """The consumer guard runs first, so its message wins when both are blank."""
+        self.assert_consumer_credentials_are_required(
+            SOCIAL_AUTH_TWITTER_KEY="",
+            SOCIAL_AUTH_TWITTER_SECRET="",
+            TWITTER_ACCESS_TOKEN="",
+            TWITTER_ACCESS_TOKEN_SECRET="",
+        )
 
 
 if __name__ == "__main__":
