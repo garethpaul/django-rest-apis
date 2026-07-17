@@ -378,6 +378,20 @@ class ViewHelperTests(unittest.TestCase):
         )
 
     def test_timeline_status_bounds_unsigned_64_bit_ids(self):
+        # Literal boundary values, never the symbol: a fixture written as
+        # views.MAX_TWITTER_STATUS_ID moves with the constant and therefore
+        # cannot detect a widening of the very bound it is meant to pin.
+        self.assertEqual(views.MAX_TWITTER_STATUS_ID, 18446744073709551615)
+        self.assertTrue(
+            views.timeline_status_is_renderable(
+                make_status(status_id=18446744073709551615)
+            )
+        )
+        self.assertFalse(
+            views.timeline_status_is_renderable(
+                make_status(status_id=18446744073709551616)
+            )
+        )
         self.assertTrue(
             views.timeline_status_is_renderable(
                 make_status(status_id=views.MAX_TWITTER_STATUS_ID)
@@ -582,6 +596,9 @@ class ViewHelperTests(unittest.TestCase):
             api, "sample_user", None
         )
 
+        # Literal boundary value, never the symbol.
+        self.assertEqual(views.TIMELINE_STATUS_LIMIT, 10)
+        self.assertEqual(api.requested_count, 10)
         self.assertEqual(api.requested_count, views.TIMELINE_STATUS_LIMIT)
         self.assertEqual(statuses, rendered)
         self.assertIsNone(error)
