@@ -303,7 +303,7 @@ if grep -Fq "request.REQUEST" "$VIEWS" || ! grep -Fq "request.POST.get(\"status\
   exit 1
 fi
 
-if ! grep -Fq "def normalize_status" "$VIEWS" || ! grep -Fq "MAX_STATUS_LENGTH = 280" "$VIEWS"; then
+if ! grep -Fq "def normalize_status" "$VIEWS" || ! grep -Fxq "MAX_STATUS_LENGTH = 280" "$VIEWS"; then
   printf '%s\n' "home view must normalize and bound submitted Twitter status text." >&2
   exit 1
 fi
@@ -900,10 +900,12 @@ if grep -Fq "raise Exception('No user for twitter API call')" "$VIEWS" ||
   exit 1
 fi
 
-if ! grep -Fq "TIMELINE_STATUS_LIMIT = 10" "$VIEWS" ||
+if ! grep -Fxq "TIMELINE_STATUS_LIMIT = 10" "$VIEWS" ||
   ! grep -Fq "len(statuses) > TIMELINE_STATUS_LIMIT" "$VIEWS" ||
   ! grep -Fq "test_load_twitter_home_accepts_exact_timeline_limit" "$VIEW_TESTS" ||
-  ! grep -Fq "test_load_twitter_home_rejects_oversized_timeline_results" "$VIEW_TESTS"; then
+  ! grep -Fq "test_load_twitter_home_rejects_oversized_timeline_results" "$VIEW_TESTS" ||
+  ! grep -Fq "self.assertEqual(views.TIMELINE_STATUS_LIMIT, 10)" "$VIEW_TESTS" ||
+  ! grep -Fq "self.assertEqual(api.requested_count, 10)" "$VIEW_TESTS"; then
   printf '%s\n' "Twitter timeline result limit must retain implementation and focused coverage." >&2
   exit 1
 fi
@@ -954,12 +956,15 @@ if ! grep -Fq "Provider timeline text longer than 280 characters" "$README" ||
   exit 1
 fi
 
-if ! grep -Fq "MAX_TWITTER_STATUS_ID = (1 << 64) - 1" "$VIEWS" ||
+if ! grep -Fxq "MAX_TWITTER_STATUS_ID = (1 << 64) - 1" "$VIEWS" ||
   ! grep -Fq "status_id <= MAX_TWITTER_STATUS_ID" "$VIEWS" ||
   ! grep -Fq "test_timeline_status_bounds_unsigned_64_bit_ids" "$VIEW_TESTS" ||
   ! grep -Fq "test_load_twitter_home_rejects_oversized_status_ids" "$VIEW_TESTS" ||
   ! grep -Fq "views.MAX_TWITTER_STATUS_ID + 1" "$VIEW_TESTS" ||
-  ! grep -Fq "status_id=10**5000" "$VIEW_TESTS"; then
+  ! grep -Fq "status_id=10**5000" "$VIEW_TESTS" ||
+  ! grep -Fq "self.assertEqual(views.MAX_TWITTER_STATUS_ID, 18446744073709551615)" "$VIEW_TESTS" ||
+  ! grep -Fq "make_status(status_id=18446744073709551615)" "$VIEW_TESTS" ||
+  ! grep -Fq "make_status(status_id=18446744073709551616)" "$VIEW_TESTS"; then
   printf '%s\n' "Twitter timeline status ID limit must retain implementation and focused coverage." >&2
   exit 1
 fi
